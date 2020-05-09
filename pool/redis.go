@@ -28,6 +28,36 @@ type Config struct {
 // GetPool returns a redis connection pool
 // which the users can use to borrows a connection from the pool
 func GetPool(config Config) (*redis.Pool, error) {
+	// TODO: use reflect to set the defaults
+	// set defaults
+	if config.Network == "" {
+		config.Network = "tcp"
+	}
+	if config.ConnectTimeoutSeconds == 0 {
+		config.ConnectTimeoutSeconds = 5
+	}
+	if config.ReadTimeoutSeconds == 0 {
+		config.ReadTimeoutSeconds = 5
+	}
+	if config.WriteTimeoutSeconds == 0 {
+		config.WriteTimeoutSeconds = 5
+	}
+	if config.KeepAliveSeconds == 0 {
+		config.KeepAliveSeconds = 300
+	}
+	if config.MaxIdle == 0 {
+		config.MaxIdle = 10
+	}
+	if config.MaxActive == 0 {
+		config.MaxActive = 10
+	}
+	if config.IdleTimeoutSeconds == 0 {
+		config.IdleTimeoutSeconds = 60
+	}
+	if config.MaxConnLifetimeSeconds == 0 {
+		config.MaxConnLifetimeSeconds = 120
+	}
+
 	// time based dial options
 	connectTimeout := time.Duration(config.ConnectTimeoutSeconds) * time.Second
 	readTimeout := time.Duration(config.ReadTimeoutSeconds) * time.Second
