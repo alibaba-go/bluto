@@ -11,7 +11,6 @@ test:
     - go get github.com/onsi/gomega/...
     - export REDIS_ADDRESS="redis:6379"
     - ginkgo -v -race -cover -outputdir=$(pwd) -coverprofile=testCoverage ./...
-    - sed -i "/streams/d" testCoverage
     - go tool cover -func=testCoverage
   only:
     refs:
