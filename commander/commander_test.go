@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
-	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/pool"
+	"git.alibaba.ir/rd/zebel-the-sailor-bluto/pooler"
 )
 
 var _ = Describe("Commander", func() {
@@ -20,9 +20,9 @@ var _ = Describe("Commander", func() {
 
 	// --------------------------------- global funcs
 
-	var getCorrectConfig = func() Config {
+	var getCorrectConfig = func() pooler.Config {
 		address := os.Getenv("REDIS_ADDRESS")
-		return Config{
+		return pooler.Config{
 			Address:               address,
 			ConnectTimeoutSeconds: 10,
 			ReadTimeoutSeconds:    10,
@@ -32,7 +32,7 @@ var _ = Describe("Commander", func() {
 	// --------------------------------- before and after hooks
 
 	BeforeSuite(func() {
-		newPool, err := GetPool(getCorrectConfig())
+		newPool, err := pooler.GetPool(getCorrectConfig())
 		if err != nil {
 			panic(err)
 		}

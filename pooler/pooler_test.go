@@ -1,4 +1,4 @@
-package pool_test
+package pooler_test
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/pool"
+	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/pooler"
 )
 
 var _ = Describe("Redis", func() {

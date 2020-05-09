@@ -1,4 +1,4 @@
-package pool_test
+package pooler_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestPool(t *testing.T) {
+func TestPooler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Pool Suite")
+	RunSpecs(t, "Pooler Suite")
 }
