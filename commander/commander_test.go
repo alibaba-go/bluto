@@ -112,7 +112,7 @@ var _ = Describe("Commander", func() {
 			cmdErr := commander.
 				Command(&selectResult, "SELECT", 0).
 				Command(&setResult, "SET", key, 9).
-				Command(&nonExistentResult, "SomeNonExistentCommand", key, 9).
+				Command(&nonExistentResult, "SOMENONEXISTENTCOMMAND", key, 9).
 				Command(&incrResult,"INCR", key).
 				Command(&getResult,"GET", key).
 				Commit()
