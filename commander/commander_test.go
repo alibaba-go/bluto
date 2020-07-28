@@ -118,7 +118,7 @@ var _ = Describe("Commander", func() {
 				Commit()
 
 
-			Expect(cmdErr).To(BeNil())
+			Expect(cmdErr).To(Not(BeNil()))
 			Expect(selectResult).To(Equal("OK"))
 			Expect(setResult).To(Equal("OK"))
 			Expect(nonExistentResult).To(BeNil())
