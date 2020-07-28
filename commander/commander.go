@@ -18,6 +18,7 @@ func New(conn redis.Conn) *Commander {
 
 // Command commands the redis connection
 func (c *Commander) Command(result interface{}, name string, args ...interface{}) *Commander {
+	result = nil
 	// if there has been an error don't do anything
 	if c.err != nil {
 		return c
