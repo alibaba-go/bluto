@@ -18,7 +18,7 @@ var _ = Describe("Commander", func() {
 	var pool *redis.Pool
 	var getConn func() redis.Conn
 
-	// --------------------------------- global funcs
+	// --------------------------------- global functions
 
 	var getCorrectConfig = func() pooler.Config {
 		address := os.Getenv("REDIS_ADDRESS")
@@ -49,15 +49,10 @@ var _ = Describe("Commander", func() {
 	BeforeEach(func() {
 		conn := getConn()
 		commander := New(conn)
-		cmdResults, err := commander.
-			Command("FLUSHALL").
-			Commit()
-		if err != nil {
-			panic(err)
-		}
-		// convert results
 		var flushResult string
-		_, err = redis.Scan(cmdResults, &flushResult)
+		err := commander.
+			Command(&flushResult,"FLUSHALL").
+			Commit()
 		if err != nil {
 			panic(err)
 		}
@@ -80,58 +75,48 @@ var _ = Describe("Commander", func() {
 			conn := getConn()
 			commander := New(conn)
 
-			key := "somekey"
-			cmdResults, cmdErr := commander.
-				Command("SELECT", 0).
-				Command("SET", key, 9).
-				Command("INCR", key).
-				Command("GET", key).
-				Commit()
+			key := "someKey"
 
-			// convert results
 			var selectResult string
 			var setResult string
 			var incrResult int
 			var getResult int
-			_, err := redis.Scan(
-				cmdResults,
-				&selectResult, &setResult,
-				&incrResult, &getResult,
-			)
+
+			cmdErr := commander.
+				Command(&selectResult, "SELECT", 0).
+				Command(&setResult, "SET", key, 9).
+				Command(&incrResult,"INCR", key).
+				Command(&getResult,"GET", key).
+				Commit()
+
 
 			Expect(cmdErr).To(BeNil())
 			Expect(selectResult).To(Equal("OK"))
 			Expect(setResult).To(Equal("OK"))
 			Expect(incrResult).To(Equal(10))
 			Expect(getResult).To(Equal(10))
-			Expect(err).To(BeNil())
 		})
 
 		It("should return the errors of an invalid chain of commands", func() {
 			conn := getConn()
 			commander := New(conn)
 
-			key := "somekey"
-			cmdResults, cmdErr := commander.
-				Command("SELECT", 0).
-				Command("SET", key, 9).
-				Command("SOMENONEXISTENTCOMMAND", key, 9).
-				Command("INCR", key).
-				Command("GET", key).
-				Commit()
+			key := "someKey"
 
-			// convert results
 			var selectResult string
 			var setResult string
 			var nonExistentResult interface{}
 			var incrResult int
 			var getResult int
-			_, err := redis.Scan(
-				cmdResults,
-				&selectResult, &setResult,
-				&nonExistentResult,
-				&incrResult, &getResult,
-			)
+
+			cmdErr := commander.
+				Command(&selectResult, "SELECT", 0).
+				Command(&setResult, "SET", key, 9).
+				Command(&nonExistentResult, "SomeNonExistentCommand", key, 9).
+				Command(&incrResult,"INCR", key).
+				Command(&getResult,"GET", key).
+				Commit()
+
 
 			Expect(cmdErr).To(BeNil())
 			Expect(selectResult).To(Equal("OK"))
@@ -139,7 +124,6 @@ var _ = Describe("Commander", func() {
 			Expect(nonExistentResult).To(BeNil())
 			Expect(incrResult).To(Equal(0))
 			Expect(getResult).To(Equal(0))
-			Expect(err).To(Not(BeNil()))
 		})
 	})
 
