@@ -76,17 +76,21 @@ var _ = Describe("Commander", func() {
 			commander := New(conn)
 
 			key := "someKey"
-
+			pingMsg := "Ping Message"
 			var selectResult string
 			var setResult string
 			var incrResult int
 			var getResult int
+			var decrResult int
+			var pingResult string
 
 			cmdErr := commander.
 				SELECT(&selectResult, 0).
 				SET(&setResult, key, 9, SetOption{}).
 				INCR(&incrResult, key).
 				GET(&getResult, key).
+				DECR(&decrResult, key).
+				PING(&pingResult, pingMsg).
 				Commit()
 
 			Expect(cmdErr).To(BeNil())
@@ -94,6 +98,8 @@ var _ = Describe("Commander", func() {
 			Expect(setResult).To(Equal("OK"))
 			Expect(incrResult).To(Equal(10))
 			Expect(getResult).To(Equal(10))
+			Expect(decrResult).To(Equal(9))
+			Expect(pingResult).To(Equal(pingMsg))
 		})
 
 		It("should return the errors of an invalid chain of commands", func() {
