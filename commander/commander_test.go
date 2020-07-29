@@ -99,7 +99,7 @@ var _ = Describe("Commander", func() {
 			Expect(incrResult).To(Equal(10))
 			Expect(getResult).To(Equal(10))
 			Expect(decrResult).To(Equal(9))
-			Expect(pingResult).To(Equal(pingMsg))
+			Expect(pingResult).To(Equal("[" + pingMsg + "]"))
 		})
 
 		It("should return the errors of an invalid chain of commands", func() {
