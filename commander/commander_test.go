@@ -51,7 +51,7 @@ var _ = Describe("Commander", func() {
 		commander := New(conn)
 		var flushResult string
 		err := commander.
-			Command(&flushResult,"FLUSHALL").
+			Command(&flushResult, "FLUSHALL").
 			Commit()
 		if err != nil {
 			panic(err)
@@ -83,12 +83,11 @@ var _ = Describe("Commander", func() {
 			var getResult int
 
 			cmdErr := commander.
-				Command(&selectResult, "SELECT", 0).
-				Command(&setResult, "SET", key, 9).
-				Command(&incrResult,"INCR", key).
-				Command(&getResult,"GET", key).
+				SELECT(&selectResult, 0).
+				SET(&setResult, key, 9, SetOption{}).
+				INCR(&incrResult, key).
+				GET(&getResult, key).
 				Commit()
-
 
 			Expect(cmdErr).To(BeNil())
 			Expect(selectResult).To(Equal("OK"))
@@ -116,7 +115,6 @@ var _ = Describe("Commander", func() {
 				INCR(&incrResult, key).
 				GET(&getResult, key).
 				Commit()
-
 
 			Expect(cmdErr).To(Not(BeNil()))
 			Expect(selectResult).To(Equal("OK"))

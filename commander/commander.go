@@ -126,21 +126,21 @@ func (c *Commander) PING(result *string, message string) *Commander {
 
 //SET perform redis command
 func (c *Commander) SET(result *string, key string, value interface{}, options SetOption) *Commander {
-	var optionCmd []interface{}
+	command := []interface{}{key, value}
 	if options.EX > 0 {
-		optionCmd = append(optionCmd, "EX", options.EX)
+		command = append(command, "EX", options.EX)
 	}
 	if options.PX > 0 {
-		optionCmd = append(optionCmd, "PX", options.PX)
+		command = append(command, "PX", options.PX)
 	}
 	if options.NX {
-		optionCmd = append(optionCmd, "NX")
+		command = append(command, "NX")
 	}
 	if options.XX {
-		optionCmd = append(optionCmd, "XX")
+		command = append(command, "XX")
 	}
 	if options.KEEPTTL {
-		optionCmd = append(optionCmd, "KEEPTTL")
+		command = append(command, "KEEPTTL")
 	}
-	return c.Command(result, "SET", []interface{}{key, value, optionCmd}...)
+	return c.Command(result, "SET", command...)
 }
