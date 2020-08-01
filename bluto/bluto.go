@@ -21,8 +21,8 @@ func New(poolConfig pooler.Config) (*Bluto, error) {
 	return bl, nil
 }
 
-//Begin start redis command
-func (bl *Bluto) Begin() *commander.Commander {
+//Borrow start redis command
+func (bl *Bluto) Borrow() *commander.Commander {
 	conn := bl.pool.Get()
 	commander := commander.New(conn)
 	return commander

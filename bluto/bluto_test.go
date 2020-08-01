@@ -47,7 +47,7 @@ var _ = Describe("Bluto", func() {
 
 	BeforeEach(func() {
 		var flushResult string
-		err := bl.Begin().FLUSHALL(&flushResult, true).Commit()
+		err := bl.Borrow().FLUSHALL(&flushResult, true).Commit()
 		if err != nil {
 			panic(err)
 		}
@@ -67,7 +67,7 @@ var _ = Describe("Bluto", func() {
 			var decrResult int
 			var pingResult string
 
-			cmdErr := bl.Begin().
+			cmdErr := bl.Borrow().
 				SELECT(&selectResult, 0).
 				SET(&setResult, key, 9, SetOption{}).
 				INCR(&incrResult, key).
