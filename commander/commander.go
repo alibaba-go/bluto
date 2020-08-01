@@ -69,12 +69,12 @@ func (c *Commander) GET(result interface{}, key string) *Commander {
 }
 
 //EXPIRE perform redis command
-func (c *Commander) EXPIRE(result interface{}, key string, seconds int) *Commander {
+func (c *Commander) EXPIRE(result *int, key string, seconds int) *Commander {
 	return c.Command(result, "EXPIRE", key, seconds)
 }
 
 //DEL perform redis command
-func (c *Commander) DEL(result interface{}, keys ...string) *Commander {
+func (c *Commander) DEL(result *int, keys ...string) *Commander {
 	iKeys := make([]interface{}, len(keys))
 	for i := range keys {
 		iKeys[i] = keys[i]
@@ -111,10 +111,11 @@ func (c *Commander) XADD(result *string, streamConfig, field interface{}) *Comma
 }
 
 //KEYS perform redis command
-func (c *Commander) KEYS(result *string, pattern string) *Commander {
+func (c *Commander) KEYS(result *[]string, pattern string) *Commander {
 	return c.Command(result, "KEYS", pattern)
 }
 
+//PING perform redis command
 //PING perform redis command
 func (c *Commander) PING(result *string, message string) *Commander {
 	var optionCmd []interface{}

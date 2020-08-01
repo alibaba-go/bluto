@@ -2,6 +2,7 @@ package commander_test
 
 import (
 	"os"
+	"time"
 
 	"github.com/gomodule/redigo/redis"
 	. "github.com/onsi/ginkgo"
@@ -71,6 +72,77 @@ var _ = Describe("Commander", func() {
 	})
 
 	Describe("Command and commit", func() {
+		It("should return the results of a valid chain of expire commands", func() {
+			conn := getConn()
+			commander := New(conn)
+			key := "SomeKey"
+			var selectResult string
+			var setResult string
+			var expireResult1 int
+			var expireResult2 int
+			var getResult1 int
+			var getResult2 int
+
+			cmdErr := commander.
+				SELECT(&selectResult, 0).
+				SET(&setResult, key, 9, SetOption{}).
+				EXPIRE(&expireResult1, key, 1).
+				EXPIRE(&expireResult2, "NotExistKey", 1).
+				GET(&getResult1, key).
+				Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(expireResult1).To(Equal(1))
+			Expect(expireResult2).To(Equal(0))
+			Expect(getResult1).To(Equal(9))
+			//sleep 1 second to expire key
+
+			time.Sleep(2 * time.Second)
+			conn = getConn()
+			commander = New(conn)
+			cmdErr = commander.
+				SELECT(&selectResult, 0).
+				GET(&getResult2, key).
+				Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(getResult2).To(Equal(0))
+		})
+
+		It("should return the results of a valid chain of del and flush commands", func() {
+			conn := getConn()
+			commander := New(conn)
+			key1 := "SomeKey1"
+			key2 := "SomeKey2"
+			var selectResult string
+			var setResult1 string
+			var setResult2 string
+			var keysResult []string
+			var delResult int
+			var getResult1 int
+			var getResult2 int
+			var flushResult string
+
+			cmdErr := commander.
+				SELECT(&selectResult, 0).
+				SET(&setResult1, key1, 9, SetOption{}).
+				SET(&setResult2, key2, 9, SetOption{}).
+				KEYS(&keysResult, "*Key*").
+				DEL(&delResult, key1, "NotExistKey").
+				GET(&getResult1, key1).
+				FLUSHALL(&flushResult, true).
+				GET(&getResult2, key2).
+				Commit()
+
+			Expect(cmdErr).To(BeNil())
+			Expect(setResult1).To(Equal("OK"))
+			Expect(setResult2).To(Equal("OK"))
+			Expect(keysResult).To(ContainElements("SomeKey1", "SomeKey2"))
+			Expect(delResult).To(Equal(1))
+			Expect(getResult1).To(Equal(0))
+			Expect(flushResult).To(Equal("OK"))
+			Expect(getResult2).To(Equal(0))
+		})
+
 		It("should return the results of a valid chain of commands", func() {
 			conn := getConn()
 			commander := New(conn)
