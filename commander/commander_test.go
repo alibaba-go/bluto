@@ -1,6 +1,7 @@
 package commander_test
 
 import (
+	"git.alibaba.ir/rd/zebel-the-sailor-bluto/bluto"
 	"os"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
-	"git.alibaba.ir/rd/zebel-the-sailor-bluto/pooler"
 )
 
 var _ = Describe("Commander", func() {
@@ -21,9 +21,9 @@ var _ = Describe("Commander", func() {
 
 	// --------------------------------- global functions
 
-	var getCorrectConfig = func() pooler.Config {
+	var getCorrectConfig = func() bluto.Config {
 		address := os.Getenv("REDIS_ADDRESS")
-		return pooler.Config{
+		return bluto.Config{
 			Address:               address,
 			ConnectTimeoutSeconds: 10,
 			ReadTimeoutSeconds:    10,
@@ -33,7 +33,7 @@ var _ = Describe("Commander", func() {
 	// --------------------------------- before and after hooks
 
 	BeforeSuite(func() {
-		newPool, err := pooler.GetPool(getCorrectConfig())
+		newPool, err := bluto.GetPool(getCorrectConfig())
 		if err != nil {
 			panic(err)
 		}

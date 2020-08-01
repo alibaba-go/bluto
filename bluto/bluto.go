@@ -2,7 +2,6 @@ package bluto
 
 import (
 	"git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
-	"git.alibaba.ir/rd/zebel-the-sailor-bluto/pooler"
 	"github.com/gomodule/redigo/redis"
 )
 
@@ -12,8 +11,8 @@ type Bluto struct {
 }
 
 //New create new Bluto instance
-func New(poolConfig pooler.Config) (*Bluto, error) {
-	pool, err := pooler.GetPool(poolConfig)
+func New(poolConfig Config) (*Bluto, error) {
+	pool, err := GetPool(poolConfig)
 	if err != nil {
 		return nil, err
 	}
