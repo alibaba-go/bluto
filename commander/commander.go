@@ -1,6 +1,8 @@
 package commander
 
-import "github.com/gomodule/redigo/redis"
+import (
+	"github.com/gomodule/redigo/redis"
+)
 
 // Commander provides a means to command redigo easily
 type Commander struct {
@@ -16,7 +18,7 @@ func New(conn redis.Conn) *Commander {
 	}
 }
 
-//SetOption define option args for redis SET command
+//SetOption define option args for redis Set command
 type SetOption struct {
 	EX      int   //EX seconds -- Set the specified expire time, in seconds.
 	PX      int64 //PX milliseconds -- Set the specified expire time, in milliseconds.
@@ -58,23 +60,23 @@ func (c *Commander) Commit() error {
 	return nil
 }
 
-//SELECT perform redis command
-func (c *Commander) SELECT(result *string, index int) *Commander {
+//Select perform redis command
+func (c *Commander) Select(result *string, index int) *Commander {
 	return c.Command(result, "SELECT", index)
 }
 
-//GET perform redis command
-func (c *Commander) GET(result interface{}, key string) *Commander {
+//Get perform redis command
+func (c *Commander) Get(result interface{}, key string) *Commander {
 	return c.Command(result, "GET", key)
 }
 
-//EXPIRE perform redis command
-func (c *Commander) EXPIRE(result *int, key string, seconds int) *Commander {
+//Expire perform redis command
+func (c *Commander) Expire(result *int, key string, seconds int) *Commander {
 	return c.Command(result, "EXPIRE", key, seconds)
 }
 
-//DEL perform redis command
-func (c *Commander) DEL(result *int, keys ...string) *Commander {
+//Del perform redis command
+func (c *Commander) Del(result *int, keys ...string) *Commander {
 	iKeys := make([]interface{}, len(keys))
 	for i := range keys {
 		iKeys[i] = keys[i]
@@ -82,18 +84,18 @@ func (c *Commander) DEL(result *int, keys ...string) *Commander {
 	return c.Command(result, "DEL", iKeys...)
 }
 
-//DECR perform redis command
-func (c *Commander) DECR(result *int, key string) *Commander {
+//Decr perform redis command
+func (c *Commander) Decr(result *int, key string) *Commander {
 	return c.Command(result, "DECR", key)
 }
 
-//INCR perform redis command
-func (c *Commander) INCR(result *int, key string) *Commander {
+//Incr perform redis command
+func (c *Commander) Incr(result *int, key string) *Commander {
 	return c.Command(result, "INCR", key)
 }
 
-//FLUSHALL perform redis command
-func (c *Commander) FLUSHALL(result *string, async bool) *Commander {
+//FlushAll perform redis command
+func (c *Commander) FlushAll(result *string, async bool) *Commander {
 	var optionCmd []interface{}
 	if async {
 		optionCmd = append(optionCmd, "ASYNC")
@@ -101,8 +103,8 @@ func (c *Commander) FLUSHALL(result *string, async bool) *Commander {
 	return c.Command(result, "FLUSHALL", optionCmd...)
 }
 
-//XADD perform redis command
-func (c *Commander) XADD(result *string, streamConfig, field interface{}) *Commander {
+//XAdd perform redis command
+func (c *Commander) XAdd(result *string, streamConfig, field interface{}) *Commander {
 	return c.Command(
 		result,
 		"XADD",
@@ -110,14 +112,13 @@ func (c *Commander) XADD(result *string, streamConfig, field interface{}) *Comma
 	)
 }
 
-//KEYS perform redis command
-func (c *Commander) KEYS(result *[]string, pattern string) *Commander {
+//Keys perform redis command
+func (c *Commander) Keys(result *[]string, pattern string) *Commander {
 	return c.Command(result, "KEYS", pattern)
 }
 
-//PING perform redis command
-//PING perform redis command
-func (c *Commander) PING(result *string, message string) *Commander {
+//Ping perform redis command
+func (c *Commander) Ping(result *string, message string) *Commander {
 	var optionCmd []interface{}
 	if message != "" {
 		optionCmd = append(optionCmd, message)
@@ -125,8 +126,8 @@ func (c *Commander) PING(result *string, message string) *Commander {
 	return c.Command(result, "PING", optionCmd)
 }
 
-//SET perform redis command
-func (c *Commander) SET(result *string, key string, value interface{}, options SetOption) *Commander {
+//Set perform redis command
+func (c *Commander) Set(result *string, key string, value interface{}, options SetOption) *Commander {
 	command := []interface{}{key, value}
 	if options.EX > 0 {
 		command = append(command, "EX", options.EX)

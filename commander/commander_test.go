@@ -52,7 +52,7 @@ var _ = Describe("Commander", func() {
 		commander := New(conn)
 		var flushResult string
 		err := commander.
-			Command(&flushResult, "FLUSHALL").
+			Command(&flushResult, "FlushAll").
 			Commit()
 		if err != nil {
 			panic(err)
@@ -84,11 +84,11 @@ var _ = Describe("Commander", func() {
 			var getResult2 int
 
 			cmdErr := commander.
-				SELECT(&selectResult, 0).
-				SET(&setResult, key, 9, SetOption{}).
-				EXPIRE(&expireResult1, key, 1).
-				EXPIRE(&expireResult2, "NotExistKey", 1).
-				GET(&getResult1, key).
+				Select(&selectResult, 0).
+				Set(&setResult, key, 9, SetOption{}).
+				Expire(&expireResult1, key, 1).
+				Expire(&expireResult2, "NotExistKey", 1).
+				Get(&getResult1, key).
 				Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
@@ -101,8 +101,8 @@ var _ = Describe("Commander", func() {
 			conn = getConn()
 			commander = New(conn)
 			cmdErr = commander.
-				SELECT(&selectResult, 0).
-				GET(&getResult2, key).
+				Select(&selectResult, 0).
+				Get(&getResult2, key).
 				Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(getResult2).To(Equal(0))
@@ -123,14 +123,14 @@ var _ = Describe("Commander", func() {
 			var flushResult string
 
 			cmdErr := commander.
-				SELECT(&selectResult, 0).
-				SET(&setResult1, key1, 9, SetOption{}).
-				SET(&setResult2, key2, 9, SetOption{}).
-				KEYS(&keysResult, "*Key*").
-				DEL(&delResult, key1, "NotExistKey").
-				GET(&getResult1, key1).
-				FLUSHALL(&flushResult, true).
-				GET(&getResult2, key2).
+				Select(&selectResult, 0).
+				Set(&setResult1, key1, 9, SetOption{}).
+				Set(&setResult2, key2, 9, SetOption{}).
+				Keys(&keysResult, "*Key*").
+				Del(&delResult, key1, "NotExistKey").
+				Get(&getResult1, key1).
+				FlushAll(&flushResult, true).
+				Get(&getResult2, key2).
 				Commit()
 
 			Expect(cmdErr).To(BeNil())
@@ -157,12 +157,12 @@ var _ = Describe("Commander", func() {
 			var pingResult string
 
 			cmdErr := commander.
-				SELECT(&selectResult, 0).
-				SET(&setResult, key, 9, SetOption{}).
-				INCR(&incrResult, key).
-				GET(&getResult, key).
-				DECR(&decrResult, key).
-				PING(&pingResult, pingMsg).
+				Select(&selectResult, 0).
+				Set(&setResult, key, 9, SetOption{}).
+				Incr(&incrResult, key).
+				Get(&getResult, key).
+				Decr(&decrResult, key).
+				Ping(&pingResult, pingMsg).
 				Commit()
 
 			Expect(cmdErr).To(BeNil())
@@ -187,11 +187,11 @@ var _ = Describe("Commander", func() {
 			var getResult int
 
 			cmdErr := commander.
-				SELECT(&selectResult, 0).
-				SET(&setResult, key, 9, SetOption{}).
+				Select(&selectResult, 0).
+				Set(&setResult, key, 9, SetOption{}).
 				Command(&nonExistentResult, "SOMENONEXISTENTCOMMAND", key, 9).
-				INCR(&incrResult, key).
-				GET(&getResult, key).
+				Incr(&incrResult, key).
+				Get(&getResult, key).
 				Commit()
 
 			Expect(cmdErr).To(Not(BeNil()))
