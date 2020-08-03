@@ -21,7 +21,7 @@ func New(conn redis.Conn) *Commander {
 //SetOption define option args for redis Set command
 type SetOption struct {
 	EX      int   //EX seconds -- Set the specified expire time, in seconds.
-	PX      int64 //PX milliseconds -- Set the specified expire time, in milliseconds.
+	PX      int   //PX milliseconds -- Set the specified expire time, in milliseconds.
 	NX      bool  //NX -- Only set the key if it does not already exist.
 	XX      bool  //XX -- Only set the key if it already exist.
 	KEEPTTL bool  //KEEPTTL -- Retain the time to live associated with the key.
@@ -123,7 +123,7 @@ func (c *Commander) Ping(result *string, message string) *Commander {
 	if message != "" {
 		optionCmd = append(optionCmd, message)
 	}
-	return c.Command(result, "PING", optionCmd)
+	return c.Command(result, "PING", optionCmd...)
 }
 
 //Set perform redis command
