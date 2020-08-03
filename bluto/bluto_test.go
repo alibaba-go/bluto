@@ -1,20 +1,18 @@
 package bluto_test
 
 import (
+	"errors"
 	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"git.alibaba.ir/rd/zebel-the-sailor-bluto/bluto"
-	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
 )
 
 var _ = Describe("Bluto", func() {
 
 	// --------------------------------- global vars
-
-	var bl *bluto.Bluto
 
 	// --------------------------------- global functions
 
@@ -27,53 +25,19 @@ var _ = Describe("Bluto", func() {
 		}
 	}
 
+	var getWrongConfig = func() bluto.Config {
+		return bluto.Config{
+			Address:               "invalidAddress:1234",
+			ConnectTimeoutSeconds: 10,
+			ReadTimeoutSeconds:    10,
+		}
+	}
 	// --------------------------------- before and after hooks
 
-	BeforeSuite(func() {
-		var err error
-		bl, err = bluto.New(getCorrectConfig())
-		if err != nil {
-			panic(err)
-		}
-	})
-
-	AfterSuite(func() {
-		err := bl.Close()
-		if err != nil {
-			panic(err)
-		}
-	})
-
-	BeforeEach(func() {
-		var flushResult string
-		err := bl.Borrow().FLUSHALL(&flushResult, true).Commit()
-		if err != nil {
-			panic(err)
-		}
-	})
 
 	// --------------------------------- tests
 
 	Describe("pooler", func() {
-
-		// --------------------------------- global funcs
-
-		var getCorrectConfig = func() bluto.Config {
-			address := os.Getenv("REDIS_ADDRESS")
-			return bluto.Config{
-				Address:               address,
-				ConnectTimeoutSeconds: 10,
-				ReadTimeoutSeconds:    10,
-			}
-		}
-
-		var getWrongConfig = func() bluto.Config {
-			return bluto.Config{
-				Address:               "blahblah",
-				ConnectTimeoutSeconds: 10,
-				ReadTimeoutSeconds:    10,
-			}
-		}
 
 		// --------------------------------- tests
 
@@ -98,37 +62,49 @@ var _ = Describe("Bluto", func() {
 				Expect(err).To(BeNil())
 			})
 		})
-
 	})
 
-	Describe("Command and commit", func() {
-		It("should return the results of a valid chain of commands", func() {
-
-			key := "someKey"
-			pingMsg := "Ping Message"
-			var selectResult string
-			var setResult string
-			var incrResult int
-			var getResult int
-			var decrResult int
+	Describe("New", func() {
+		It("should create new bluto instance with correct config", func() {
+			bluto, newErr := bluto.New(getCorrectConfig())
 			var pingResult string
-
-			cmdErr := bl.Borrow().
-				SELECT(&selectResult, 0).
-				SET(&setResult, key, 9, SetOption{}).
-				INCR(&incrResult, key).
-				GET(&getResult, key).
-				DECR(&decrResult, key).
-				PING(&pingResult, pingMsg).
-				Commit()
-
+			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
 			Expect(cmdErr).To(BeNil())
-			Expect(selectResult).To(Equal("OK"))
-			Expect(setResult).To(Equal("OK"))
-			Expect(incrResult).To(Equal(10))
-			Expect(getResult).To(Equal(10))
-			Expect(decrResult).To(Equal(9))
-			Expect(pingResult).To(Equal("[" + pingMsg + "]"))
+			Expect(newErr).To(BeNil())
+			Expect(pingResult).To(Equal("PONG"))
+		})
+
+		It("should fail to create new bluto instance with wrong config", func() {
+			bluto, newErr := bluto.New(getWrongConfig())
+			var pingResult string
+			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
+			Expect(cmdErr).To(Not(BeNil()))
+			Expect(newErr).To(BeNil())
+			Expect(pingResult).To(Not(Equal("PONG")))
+		})
+	})
+
+	Describe("Close", func() {
+		It("should close bluto instance", func() {
+			bluto, newErr := bluto.New(getCorrectConfig())
+			clsErr := bluto.Close()
+			var pingResult string
+			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
+			Expect(clsErr).To(BeNil())
+			Expect(cmdErr).To(Equal(errors.New("redigo: get on closed pool")))
+			Expect(newErr).To(BeNil())
+			Expect(pingResult).To(Not(Equal("PONG")))
+		})
+	})
+
+	Describe("Borrow", func() {
+		It("should close bluto instance", func() {
+			bluto, newErr := bluto.New(getCorrectConfig())
+			var pingResult string
+			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(newErr).To(BeNil())
+			Expect(pingResult).To(Equal("PONG"))
 		})
 	})
 
