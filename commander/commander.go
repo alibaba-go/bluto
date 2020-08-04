@@ -18,7 +18,7 @@ func New(conn redis.Conn) *Commander {
 	}
 }
 
-//SetOption define option args for redis Set command
+// SetOption define option args for redis Set command
 type SetOption struct {
 	EX      int   //EX seconds -- Set the specified expire time, in seconds.
 	PX      int   //PX milliseconds -- Set the specified expire time, in milliseconds.
@@ -60,22 +60,22 @@ func (c *Commander) Commit() error {
 	return nil
 }
 
-//Select perform redis command
+// Select perform redis command
 func (c *Commander) Select(result *string, index int) *Commander {
 	return c.Command(result, "SELECT", index)
 }
 
-//Get perform redis command
+// Get perform redis command
 func (c *Commander) Get(result interface{}, key string) *Commander {
 	return c.Command(result, "GET", key)
 }
 
-//Expire perform redis command
+// Expire perform redis command
 func (c *Commander) Expire(result *int, key string, seconds int) *Commander {
 	return c.Command(result, "EXPIRE", key, seconds)
 }
 
-//Del perform redis command
+// Del perform redis command
 func (c *Commander) Del(result *int, keys ...string) *Commander {
 	iKeys := make([]interface{}, len(keys))
 	for i := range keys {
@@ -84,17 +84,17 @@ func (c *Commander) Del(result *int, keys ...string) *Commander {
 	return c.Command(result, "DEL", iKeys...)
 }
 
-//Decr perform redis command
+// Decr perform redis command
 func (c *Commander) Decr(result *int, key string) *Commander {
 	return c.Command(result, "DECR", key)
 }
 
-//Incr perform redis command
+// Incr perform redis command
 func (c *Commander) Incr(result *int, key string) *Commander {
 	return c.Command(result, "INCR", key)
 }
 
-//FlushAll perform redis command
+// FlushAll perform redis command
 func (c *Commander) FlushAll(result *string, async bool) *Commander {
 	var optionCmd []interface{}
 	if async {
@@ -103,7 +103,7 @@ func (c *Commander) FlushAll(result *string, async bool) *Commander {
 	return c.Command(result, "FLUSHALL", optionCmd...)
 }
 
-//XAdd perform redis command
+// XAdd perform redis command
 func (c *Commander) XAdd(result *string, streamConfig, field interface{}) *Commander {
 	return c.Command(
 		result,
@@ -112,12 +112,12 @@ func (c *Commander) XAdd(result *string, streamConfig, field interface{}) *Comma
 	)
 }
 
-//Keys perform redis command
+// Keys perform redis command
 func (c *Commander) Keys(result *[]string, pattern string) *Commander {
 	return c.Command(result, "KEYS", pattern)
 }
 
-//Ping perform redis command
+// Ping perform redis command
 func (c *Commander) Ping(result *string, message string) *Commander {
 	var optionCmd []interface{}
 	if message != "" {
@@ -126,7 +126,7 @@ func (c *Commander) Ping(result *string, message string) *Commander {
 	return c.Command(result, "PING", optionCmd...)
 }
 
-//Set perform redis command
+// Set perform redis command
 func (c *Commander) Set(result *string, key string, value interface{}, options SetOption) *Commander {
 	command := []interface{}{key, value}
 	if options.EX > 0 {
