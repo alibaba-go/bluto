@@ -12,8 +12,6 @@ import (
 
 var _ = Describe("Bluto", func() {
 
-	// --------------------------------- global vars
-
 	// --------------------------------- global functions
 
 	var getCorrectConfig = func() bluto.Config {
@@ -32,37 +30,8 @@ var _ = Describe("Bluto", func() {
 			ReadTimeoutSeconds:    10,
 		}
 	}
-	// --------------------------------- before and after hooks
-
 
 	// --------------------------------- tests
-
-	Describe("pooler", func() {
-
-		// --------------------------------- tests
-
-		Describe("GetPool", func() {
-			It("should connect to the redis server with correct info", func() {
-				pool, err := bluto.GetPool(getCorrectConfig())
-
-				Expect(err).To(BeNil())
-				Expect(pool).To(Not(BeNil()))
-
-				err = pool.Close()
-				Expect(err).To(BeNil())
-			})
-
-			It("should not connect to the redis server with incorrect info", func() {
-				pool, err := bluto.GetPool(getWrongConfig())
-
-				Expect(err).To(BeNil())
-				Expect(pool).To(Not(BeNil()))
-
-				err = pool.Close()
-				Expect(err).To(BeNil())
-			})
-		})
-	})
 
 	Describe("New", func() {
 		It("should create new bluto instance with correct config", func() {
