@@ -60,22 +60,22 @@ func (c *Commander) Commit() error {
 	return nil
 }
 
-// Select perform redis command
+// Select the Redis logical database having the specified zero-based numeric index.
 func (c *Commander) Select(result *string, index int) *Commander {
 	return c.Command(result, "SELECT", index)
 }
 
-// Get perform redis command
+// Get the value of key. If the key does not exist the special value nil is returned.
 func (c *Commander) Get(result interface{}, key string) *Commander {
 	return c.Command(result, "GET", key)
 }
 
-// Expire perform redis command
+// Expire set a timeout on key. After the timeout has expired, the key will automatically be deleted.
 func (c *Commander) Expire(result *int, key string, seconds int) *Commander {
 	return c.Command(result, "EXPIRE", key, seconds)
 }
 
-// Del perform redis command
+// Del removes the specified keys. A key is ignored if it does not exist.
 func (c *Commander) Del(result *int, keys ...string) *Commander {
 	iKeys := make([]interface{}, len(keys))
 	for i := range keys {
@@ -84,17 +84,17 @@ func (c *Commander) Del(result *int, keys ...string) *Commander {
 	return c.Command(result, "DEL", iKeys...)
 }
 
-// Decr perform redis command
+// Decr decrements the number stored at key by one. If the key does not exist, it is set to 0.
 func (c *Commander) Decr(result *int, key string) *Commander {
 	return c.Command(result, "DECR", key)
 }
 
-// Incr perform redis command
+// Incr Increments the number stored at key by one. If the key does not exist, it is set to 0.
 func (c *Commander) Incr(result *int, key string) *Commander {
 	return c.Command(result, "INCR", key)
 }
 
-// FlushAll perform redis command
+// FlushAll delete all the keys of all the existing databases, not just the currently selected one.
 func (c *Commander) FlushAll(result *string, async bool) *Commander {
 	var optionCmd []interface{}
 	if async {
@@ -103,21 +103,21 @@ func (c *Commander) FlushAll(result *string, async bool) *Commander {
 	return c.Command(result, "FLUSHALL", optionCmd...)
 }
 
-// XAdd perform redis command
-func (c *Commander) XAdd(result *string, streamConfig, field interface{}) *Commander {
+// XAdd appends the specified stream entry to the stream at the specified key.
+func (c *Commander) XAdd(result *string, streamID string, streamName, fields interface{}) *Commander {
 	return c.Command(
 		result,
 		"XADD",
-		redis.Args{}.Add(streamConfig).Add("*").AddFlat(&field)...,
+		redis.Args{}.Add(streamName).Add(streamID).AddFlat(&fields)...,
 	)
 }
 
-// Keys perform redis command
+// Keys returns all keys matching pattern.
 func (c *Commander) Keys(result *[]string, pattern string) *Commander {
 	return c.Command(result, "KEYS", pattern)
 }
 
-// Ping perform redis command
+// Ping returns PONG if no argument is provided, otherwise return a copy of the argument as a bulk.
 func (c *Commander) Ping(result *string, message string) *Commander {
 	var optionCmd []interface{}
 	if message != "" {
@@ -126,7 +126,7 @@ func (c *Commander) Ping(result *string, message string) *Commander {
 	return c.Command(result, "PING", optionCmd...)
 }
 
-// Set perform redis command
+// Set key to hold the string value. If key already holds a value, it is overwritten.
 func (c *Commander) Set(result *string, key string, value interface{}, options SetOption) *Commander {
 	command := []interface{}{key, value}
 	if options.EX > 0 {
