@@ -68,14 +68,14 @@ var _ = Describe("Bluto", func() {
 	})
 
 	Describe("Borrow", func() {
-		It("should close bluto instance", func() {
+		It("should borrow a connection from the redis pool", func() {
 			bluto, newErr := bluto.New(getCorrectConfig())
 			var pingResult string
 			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(newErr).To(BeNil())
 			Expect(pingResult).To(Equal("PONG"))
+			bluto.Close()
 		})
 	})
-
 })
