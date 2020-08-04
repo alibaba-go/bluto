@@ -27,6 +27,12 @@ type SetOption struct {
 	KEEPTTL bool  //KEEPTTL -- Retain the time to live associated with the key.
 }
 
+//XAddOption define option for redis stream XAdd command
+type XAddOption struct{
+	maxLen int
+	approximate bool
+}
+
 // Command commands the redis connection
 func (c *Commander) Command(result interface{}, name string, args ...interface{}) *Commander {
 	// if there has been an error don't do anything
@@ -104,14 +110,14 @@ func (c *Commander) FlushAll(result *string, async bool) *Commander {
 }
 
 // XAdd appends the specified stream entry to the stream at the specified key.
-func (c *Commander) XAdd(result *string, streamName, streamID string, maxLen int, approximate bool, fields interface{}) *Commander {
+func (c *Commander) XAdd(result *string, streamName, option XAddOption, streamID string, fields interface{}) *Commander {
 	cmd := redis.Args{}.Add(streamName)
-	if maxLen != 0{
+	if option.maxLen != 0{
 		cmd.Add("MAXLEN")
-		if approximate {
+		if option.approximate {
 			cmd.Add("~")
 		}
-		cmd.Add(maxLen)
+		cmd.Add(option.maxLen)
 	}
 	cmd.Add(streamID)
 	return c.Command(
