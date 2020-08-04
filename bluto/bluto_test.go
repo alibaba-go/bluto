@@ -41,6 +41,7 @@ var _ = Describe("Bluto", func() {
 			Expect(cmdErr).To(BeNil())
 			Expect(newErr).To(BeNil())
 			Expect(pingResult).To(Equal("PONG"))
+			bluto.Close()
 		})
 
 		It("should fail to create new bluto instance with wrong config", func() {
