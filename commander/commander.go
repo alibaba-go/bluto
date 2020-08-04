@@ -104,15 +104,16 @@ func (c *Commander) FlushAll(result *string, async bool) *Commander {
 }
 
 // XAdd appends the specified stream entry to the stream at the specified key.
-func (c *Commander) XAdd(result *string, streamName, streamID string, maxLen int, streamSizeApproximate bool, fields interface{}) *Commander {
-	cmd := redis.Args{}.Add(streamName).Add(streamID)
+func (c *Commander) XAdd(result *string, streamName, streamID string, maxLen int, approximate bool, fields interface{}) *Commander {
+	cmd := redis.Args{}.Add(streamName)
 	if maxLen != 0{
 		cmd.Add("MAXLEN")
-		if streamSizeApproximate {
+		if approximate {
 			cmd.Add("~")
 		}
 		cmd.Add(maxLen)
 	}
+	cmd.Add(streamID)
 	return c.Command(
 		result,
 		"XADD",
