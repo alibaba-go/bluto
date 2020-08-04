@@ -5,14 +5,14 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-//Bluto create ready to use redis client
+// Bluto create ready to use redis client
 type Bluto struct {
 	pool *redis.Pool
 }
 
-//New create new Bluto instance
-func New(poolConfig Config) (*Bluto, error) {
-	pool, err := GetPool(poolConfig)
+// New create new Bluto instance
+func New(config Config) (*Bluto, error) {
+	pool, err := GetPool(config)
 	if err != nil {
 		return nil, err
 	}
@@ -20,14 +20,14 @@ func New(poolConfig Config) (*Bluto, error) {
 	return bl, nil
 }
 
-//Borrow start redis command
+// Borrow start redis command
 func (bl *Bluto) Borrow() *commander.Commander {
 	conn := bl.pool.Get()
 	commander := commander.New(conn)
 	return commander
 }
 
-//Close close redis pool
+// Close close redis pool
 func (bl *Bluto) Close() error {
 	return bl.pool.Close()
 }
