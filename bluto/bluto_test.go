@@ -38,7 +38,7 @@ var _ = Describe("Bluto", func() {
 			bluto, newErr := bluto.New(getCorrectConfig())
 			defer bluto.Close()
 			var pingResult string
-			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
+			cmdErr := bluto.Borrow().Ping(&pingResult, "").Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(newErr).To(BeNil())
 			Expect(pingResult).To(Equal("PONG"))
@@ -47,7 +47,7 @@ var _ = Describe("Bluto", func() {
 		It("should fail to create new bluto instance with wrong config", func() {
 			bluto, newErr := bluto.New(getWrongConfig())
 			var pingResult string
-			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
+			cmdErr := bluto.Borrow().Ping(&pingResult, "").Commit()
 			Expect(cmdErr).To(Not(BeNil()))
 			Expect(newErr).To(BeNil())
 			Expect(pingResult).To(Not(Equal("PONG")))
@@ -59,7 +59,7 @@ var _ = Describe("Bluto", func() {
 			bluto, newErr := bluto.New(getCorrectConfig())
 			clsErr := bluto.Close()
 			var pingResult string
-			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
+			cmdErr := bluto.Borrow().Ping(&pingResult, "").Commit()
 			Expect(clsErr).To(BeNil())
 			Expect(cmdErr).To(Equal(errors.New("redigo: get on closed pool")))
 			Expect(newErr).To(BeNil())
@@ -72,7 +72,7 @@ var _ = Describe("Bluto", func() {
 			bluto, newErr := bluto.New(getCorrectConfig())
 			defer bluto.Close()
 			var pingResult string
-			cmdErr := bluto.Borrow().Ping(&pingResult,"").Commit()
+			cmdErr := bluto.Borrow().Ping(&pingResult, "").Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(newErr).To(BeNil())
 			Expect(pingResult).To(Equal("PONG"))

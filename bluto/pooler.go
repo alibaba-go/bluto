@@ -7,7 +7,6 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-
 // GetPool returns a redis connection pool
 // which the users can use to borrows a connection from the pool
 func GetPool(config Config) (*redis.Pool, error) {

@@ -1,6 +1,5 @@
 package bluto
 
-
 // Config is used to get initialization configs for Pool
 type Config struct {
 	// ---------------------------------------- dial options
