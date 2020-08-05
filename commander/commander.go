@@ -20,16 +20,16 @@ func New(conn redis.Conn) *Commander {
 
 // SetOption define option args for redis Set command
 type SetOption struct {
-	EX      int   //EX seconds -- Set the specified expire time, in seconds.
-	PX      int   //PX milliseconds -- Set the specified expire time, in milliseconds.
-	NX      bool  //NX -- Only set the key if it does not already exist.
-	XX      bool  //XX -- Only set the key if it already exist.
-	KEEPTTL bool  //KEEPTTL -- Retain the time to live associated with the key.
+	EX      int  //EX seconds -- Set the specified expire time, in seconds.
+	PX      int  //PX milliseconds -- Set the specified expire time, in milliseconds.
+	NX      bool //NX -- Only set the key if it does not already exist.
+	XX      bool //XX -- Only set the key if it already exist.
+	KEEPTTL bool //KEEPTTL -- Retain the time to live associated with the key.
 }
 
 //XAddOption define option for redis stream XAdd command
-type XAddOption struct{
-	maxLen int
+type XAddOption struct {
+	maxLen      int
 	approximate bool
 }
 
@@ -112,7 +112,7 @@ func (c *Commander) FlushAll(result *string, async bool) *Commander {
 // XAdd appends the specified stream entry to the stream at the specified key.
 func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options XAddOption) *Commander {
 	cmd := redis.Args{}.Add(streamName)
-	if options.maxLen != 0{
+	if options.maxLen != 0 {
 		cmd = cmd.Add("MAXLEN")
 		if options.approximate {
 			cmd = cmd.Add("~")

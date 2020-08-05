@@ -2,19 +2,19 @@ package commander_test
 
 import (
 	"errors"
+	"os"
+	"time"
+
 	"git.alibaba.ir/rd/zebel-the-sailor-bluto/bluto"
 	"github.com/gomodule/redigo/redis"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/rafaeljusto/redigomock"
-	"os"
-	"time"
 
 	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
 )
 
 var _ = Describe("Commander", func() {
-
 
 	// --------------------------------- global vars
 
@@ -36,7 +36,7 @@ var _ = Describe("Commander", func() {
 
 	BeforeSuite(func() {
 		newPool, err := bluto.GetPool(getCorrectConfig())
-		if err != nil{
+		if err != nil {
 			panic(err)
 		}
 		pool = newPool
@@ -47,7 +47,7 @@ var _ = Describe("Commander", func() {
 
 	AfterSuite(func() {
 		err := pool.Close()
-		if err != nil{
+		if err != nil {
 			panic(err)
 		}
 	})
@@ -69,19 +69,19 @@ var _ = Describe("Commander", func() {
 	Describe("New method", func() {
 		It("should return a new commander", func() {
 			pool, err := bluto.GetPool(getCorrectConfig())
-			defer func(){
+			defer func() {
 				err := pool.Close()
-				if err != nil{
+				if err != nil {
 					panic(err)
 				}
 			}()
-			if err != nil{
+			if err != nil {
 				panic(err)
 			}
 			conn := pool.Get()
-			defer func(){
+			defer func() {
 				err := conn.Close()
-				if err != nil{
+				if err != nil {
 					panic(err)
 				}
 			}()
@@ -90,7 +90,6 @@ var _ = Describe("Commander", func() {
 			Expect(commander).To(BeAssignableToTypeOf(&Commander{}))
 		})
 	})
-
 
 	Describe("Set", func() {
 		It("should return the real results of a valid SET", func() {
@@ -142,7 +141,7 @@ var _ = Describe("Commander", func() {
 			conn.Command("SET", key, value, "EX", 10, "NX", "KEEPTTL").Expect("OK")
 			var setResult string
 			cmdErr := commander.
-				Set(&setResult, key, value, SetOption{EX: 10, NX:true, KEEPTTL: true}).
+				Set(&setResult, key, value, SetOption{EX: 10, NX: true, KEEPTTL: true}).
 				Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
@@ -152,7 +151,7 @@ var _ = Describe("Commander", func() {
 			conn.Command("SET", key, value, "PX", 10000, "XX").Expect("OK")
 			commander = New(conn)
 			cmdErr = commander.
-				Set(&setResult, key, value, SetOption{PX: 10000, XX:true}).
+				Set(&setResult, key, value, SetOption{PX: 10000, XX: true}).
 				Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
@@ -168,7 +167,7 @@ var _ = Describe("Commander", func() {
 			conn.Command("SET", key, value, "NX", "XX").ExpectError(syntaxErr)
 			var setResult string
 			cmdErr := commander.
-				Set(&setResult, key, value, SetOption{NX: true, XX:true}).
+				Set(&setResult, key, value, SetOption{NX: true, XX: true}).
 				Commit()
 			Expect(cmdErr).To(Equal(syntaxErr))
 			Expect(setResult).To(Equal(""))
@@ -178,7 +177,7 @@ var _ = Describe("Commander", func() {
 			conn.Command("SET", key, value, "EX", 1, "PX", 1000).ExpectError(syntaxErr)
 			commander = New(conn)
 			cmdErr = commander.
-				Set(&setResult, key, value, SetOption{EX:1, PX: 1000}).
+				Set(&setResult, key, value, SetOption{EX: 1, PX: 1000}).
 				Commit()
 			Expect(cmdErr).To(Equal(syntaxErr))
 			Expect(setResult).To(Equal(""))
@@ -249,6 +248,17 @@ var _ = Describe("Commander", func() {
 
 	Describe("Select", func() {
 
+		It("should return the real results of a valid SELECT", func() {
+			conn := getConn()
+			commander := New(conn)
+			var selectResult string
+			cmdErr := commander.
+				Select(&selectResult, 3).
+				Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(selectResult).To(Equal("OK"))
+		})
+
 		It("should return the results of a valid SELECT", func() {
 			conn := redigomock.NewConn()
 			defer conn.Close()
@@ -290,11 +300,11 @@ var _ = Describe("Commander", func() {
 			conn = getConn()
 			commander := New(conn)
 			var expireResult int
-			cmdErr := commander.Expire(&expireResult, key,1).Commit()
+			cmdErr := commander.Expire(&expireResult, key, 1).Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(expireResult).To(Equal(1))
 
-			time.Sleep(1100*time.Millisecond)
+			time.Sleep(1100 * time.Millisecond)
 
 			conn = getConn()
 			var getResult int
@@ -311,7 +321,6 @@ var _ = Describe("Commander", func() {
 			Expect(getResult).To(Equal(0))
 		})
 
-
 		It("should return the results of a valid EXPIRE", func() {
 			key := "SomeKey"
 			conn := redigomock.NewConn()
@@ -319,7 +328,7 @@ var _ = Describe("Commander", func() {
 			conn.Command("EXPIRE", key, 5).Expect(int64(1))
 			commander := New(conn)
 			var expireResult int
-			cmdErr := commander.Expire(&expireResult, key,5).Commit()
+			cmdErr := commander.Expire(&expireResult, key, 5).Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(expireResult).To(Equal(1))
 
@@ -327,7 +336,7 @@ var _ = Describe("Commander", func() {
 			conn.Command("EXPIRE", "NotExistKey", 5).Expect(int64(0))
 			commander = New(conn)
 			var expireResult2 int
-			cmdErr = commander.Expire(&expireResult2, "NotExistKey",5).Commit()
+			cmdErr = commander.Expire(&expireResult2, "NotExistKey", 5).Commit()
 			Expect(cmdErr).To(BeNil())
 			Expect(expireResult2).To(Equal(0))
 		})
@@ -382,7 +391,7 @@ var _ = Describe("Commander", func() {
 			Expect(delResult).To(Equal(1))
 
 			conn = redigomock.NewConn()
-			conn.Command("DEL","NotExistKey").Expect(int64(0))
+			conn.Command("DEL", "NotExistKey").Expect(int64(0))
 			commander = New(conn)
 			var delResult2 int
 			cmdErr = commander.Del(&delResult2, "NotExistKey").Commit()
@@ -427,7 +436,6 @@ var _ = Describe("Commander", func() {
 			Expect(cmdErr).To(BeNil())
 			Expect(getResult).To(Equal(10))
 		})
-
 
 		It("should return the results of a valid INCR", func() {
 			conn := redigomock.NewConn()
@@ -551,7 +559,6 @@ var _ = Describe("Commander", func() {
 			Expect(getResult).To(Equal(0))
 		})
 
-
 		It("should return the results of a valid FLUSHALL", func() {
 			conn := redigomock.NewConn()
 			defer conn.Close()
@@ -589,7 +596,6 @@ var _ = Describe("Commander", func() {
 			Expect(cmdErr).To(BeNil())
 			Expect(keysResult).To(ContainElements("SomeKey1", "SomeKey2"))
 		})
-
 
 		It("should return the results of a valid KEYS", func() {
 			conn := redigomock.NewConn()
