@@ -29,8 +29,8 @@ type SetOption struct {
 
 //XAddOption define option for redis stream XAdd command
 type XAddOption struct {
-	maxLen      int
-	approximate bool
+	MaxLen      int
+	Approximate bool
 }
 
 // Command commands the redis connection
@@ -112,12 +112,12 @@ func (c *Commander) FlushAll(result *string, async bool) *Commander {
 // XAdd appends the specified stream entry to the stream at the specified key.
 func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options XAddOption) *Commander {
 	cmd := redis.Args{}.Add(streamName)
-	if options.maxLen != 0 {
+	if options.MaxLen != 0 {
 		cmd = cmd.Add("MAXLEN")
-		if options.approximate {
+		if options.Approximate {
 			cmd = cmd.Add("~")
 		}
-		cmd = cmd.Add(options.maxLen)
+		cmd = cmd.Add(options.MaxLen)
 	}
 	cmd = cmd.Add(streamID)
 	return c.Command(
@@ -143,7 +143,7 @@ func (c *Commander) Ping(result *string, message string) *Commander {
 
 // Set key to hold the string value. If key already holds a value, it is overwritten.
 func (c *Commander) Set(result *string, key string, value interface{}, options SetOption) *Commander {
-	command := []interface{}{key, value}
+	command := []interface{}{key, value}//TODO: fix redis args 
 	if options.EX > 0 {
 		command = append(command, "EX", options.EX)
 	}
