@@ -39,9 +39,9 @@ func (c *Commander) Command(result interface{}, name string, args ...interface{}
 	if c.err != nil {
 		return c
 	}
-	//add query result to pending result list
+	// add query result to pending result list
 	c.pendingResults = append(c.pendingResults, result)
-	// send the command
+	// send the command to buffer
 	c.err = c.conn.Send(name, args...)
 	return c
 }
@@ -58,7 +58,7 @@ func (c *Commander) Commit() error {
 	if err != nil {
 		return err
 	}
-	//evaluate all pending results
+	// evaluate all pending results
 	_, err = redis.Scan(results, c.pendingResults...)
 	if err != nil {
 		return err
@@ -107,24 +107,6 @@ func (c *Commander) FlushAll(result *string, async bool) *Commander {
 		optionCmd = append(optionCmd, "ASYNC")
 	}
 	return c.Command(result, "FLUSHALL", optionCmd...)
-}
-
-// XAdd appends the specified stream entry to the stream at the specified key.
-func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options XAddOption) *Commander {
-	cmd := redis.Args{}.Add(streamName)
-	if options.MaxLen != 0 {
-		cmd = cmd.Add("MAXLEN")
-		if options.Approximate {
-			cmd = cmd.Add("~")
-		}
-		cmd = cmd.Add(options.MaxLen)
-	}
-	cmd = cmd.Add(streamID)
-	return c.Command(
-		result,
-		"XADD",
-		cmd.AddFlat(&fields)...,
-	)
 }
 
 // Keys returns all keys matching pattern.

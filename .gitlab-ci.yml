@@ -4,13 +4,30 @@ services:
   - name: docker.mirrors.alibaba.ir/library/redis:5
     alias: redis
 
-test:
+stages:
+  - test
+
+behavioural-test:
   stage: test
   script:
     - go get github.com/onsi/ginkgo/ginkgo
     - go get github.com/onsi/gomega/...
     - export REDIS_ADDRESS="redis:6379"
     - ginkgo -v -race -cover -outputdir=$(pwd) -coverprofile=testCoverage ./...
+    - go tool cover -func=testCoverage
+  only:
+    refs:
+      - merge_requests
+      - master
+      - tags
+
+unit-test:
+  stage: test
+  script:
+    - go get github.com/onsi/ginkgo/ginkgo
+    - go get github.com/onsi/gomega/...
+    - export REDIS_ADDRESS="redis:6379"
+    - go test -v -race -cover -outputdir=$(pwd) -coverprofile=testCoverage ./...
     - go tool cover -func=testCoverage
   only:
     refs:
