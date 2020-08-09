@@ -143,21 +143,25 @@ func (c *Commander) Ping(result *string, message string) *Commander {
 
 // Set key to hold the string value. If key already holds a value, it is overwritten.
 func (c *Commander) Set(result *string, key string, value interface{}, options SetOption) *Commander {
-	command := []interface{}{key, value}//TODO: fix redis args 
+	command := redis.Args{}
+	command = command.Add(key)
+	command = command.Add(value)
 	if options.EX > 0 {
-		command = append(command, "EX", options.EX)
+		command = command.Add("EX")
+		command = command.Add(options.EX)
 	}
 	if options.PX > 0 {
-		command = append(command, "PX", options.PX)
+		command = command.Add("PX")
+		command = command.Add(options.PX)
 	}
 	if options.NX {
-		command = append(command, "NX")
+		command = command.Add("NX")
 	}
 	if options.XX {
-		command = append(command, "XX")
+		command = command.Add("XX")
 	}
 	if options.KEEPTTL {
-		command = append(command, "KEEPTTL")
+		command = command.Add("KEEPTTL")
 	}
 	return c.Command(result, "SET", command...)
 }
