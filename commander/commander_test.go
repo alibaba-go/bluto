@@ -1,7 +1,6 @@
 package commander_test
 
 import (
-	"errors"
 	"os"
 	"time"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/gomodule/redigo/redis"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/rafaeljusto/redigomock"
 
 	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
 )
@@ -92,111 +90,153 @@ var _ = Describe("Commander", func() {
 	})
 
 	Describe("Set", func() {
-		It("should return the real results of a valid SET", func() {
+		It("should return the results of a valid SET", func() {
 			key := "SomeKey"
 			value := 9
 			conn := getConn()
 			commander := New(conn)
-			var setResult string
-			cmdErr := commander.
-				Set(&setResult, key, value, SetOption{NX: true}).
-				Commit()
-			conn = getConn()
-			var getResult int
-			errSend := conn.Send("GET", key)
-			results, err := redis.Values(conn.Do(""))
-			_, err = redis.Scan(results, &getResult)
-			if err != nil {
-				panic(err)
-			}
-			conn.Close()
-			Expect(errSend).To(BeNil())
-			Expect(err).To(BeNil())
-			Expect(cmdErr).To(BeNil())
-			Expect(setResult).To(Equal("OK"))
-			Expect(getResult).To(Equal(9))
-		})
-
-		It("should return the results of a valid SET", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			commander := New(conn)
-			key := "SomeKey"
-			value := 9
-			conn.Command("SET", key, value).Expect("OK")
 			var setResult string
 			cmdErr := commander.
 				Set(&setResult, key, value, SetOption{}).
 				Commit()
+			conn = getConn()
+			var getResult int
+			errSend := conn.Send("GET", key)
+			results, errRsult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &getResult)
+
+			conn.Close()
+			Expect(errSend).To(BeNil())
+			Expect(errRsult).To(BeNil())
 			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
+			Expect(getResult).To(Equal(9))
 		})
 
-		It("should return the results of a valid SET With option", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			commander := New(conn)
-			key := "SomeKey"
-			value := 9
-			conn.Command("SET", key, value, "EX", 10, "NX", "KEEPTTL").Expect("OK")
-			var setResult string
-			cmdErr := commander.
-				Set(&setResult, key, value, SetOption{EX: 10, NX: true, KEEPTTL: true}).
-				Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(setResult).To(Equal("OK"))
-
-			conn = redigomock.NewConn()
-			setResult = ""
-			conn.Command("SET", key, value, "PX", 10000, "XX").Expect("OK")
-			commander = New(conn)
-			cmdErr = commander.
-				Set(&setResult, key, value, SetOption{PX: 10000, XX: true}).
-				Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(setResult).To(Equal("OK"))
-		})
-
-		It("should return the error of a invalid SET option", func() {
-			syntaxErr := errors.New("ERR syntax error")
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			commander := New(conn)
-			key := "SomeKey"
-			value := 9
-			conn.Command("SET", key, value, "NX", "XX").ExpectError(syntaxErr)
-			var setResult string
-			cmdErr := commander.
-				Set(&setResult, key, value, SetOption{NX: true, XX: true}).
-				Commit()
-			Expect(cmdErr).To(Equal(syntaxErr))
-			Expect(setResult).To(Equal(""))
-
-			conn = redigomock.NewConn()
-			setResult = ""
-			conn.Command("SET", key, value, "EX", 1, "PX", 1000).ExpectError(syntaxErr)
-			commander = New(conn)
-			cmdErr = commander.
-				Set(&setResult, key, value, SetOption{EX: 1, PX: 1000}).
-				Commit()
-			Expect(cmdErr).To(Equal(syntaxErr))
-			Expect(setResult).To(Equal(""))
-		})
-	})
-
-	Describe("Get", func() {
-		It("should return the real results of a valid GET", func() {
+		It("should return the results of a expired SET with EX option", func() {
 			key := "SomeKey"
 			value := 9
 			conn := getConn()
+			commander := New(conn)
+			var setResult string
+			cmdErr := commander.
+				Set(&setResult, key, value, SetOption{EX: 1}).
+				Commit()
+			time.Sleep(1100 * time.Millisecond)
+			conn = getConn()
+			defer conn.Close()
+			var getResult int
+			errSend := conn.Send("GET", key)
+			results, errRsult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &getResult)
+
+			Expect(errSend).To(BeNil())
+			Expect(errRsult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(getResult).To(Equal(0))
+		})
+
+		It("should return the results of a expired SET with PX option", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			commander := New(conn)
+			var setResult string
+			cmdErr := commander.
+				Set(&setResult, key, value, SetOption{PX: 1000}).
+				Commit()
+			time.Sleep(1100 * time.Millisecond)
+			conn = getConn()
+			defer conn.Close()
+			var getResult int
+			errSend := conn.Send("GET", key)
+			results, errRsult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &getResult)
+
+			Expect(errSend).To(BeNil())
+			Expect(errRsult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(getResult).To(Equal(0))
+		})
+
+		It("should return the results of a expired SET with NX option", func() {
+			key := "SomeKey"
+			value := 9
+			newValue := 10
+			conn := getConn()
+			defer conn.Close()
 			var setResult string
 			errSend := conn.Send("SET", key, value)
-			results, err := redis.Values(conn.Do(""))
-			_, err = redis.Scan(results, &setResult)
-			if err != nil {
-				panic(err)
-			}
-			conn.Close()
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult)
+			conn = getConn()
+			commander := New(conn)
+			var newSetResult string
+			cmdErr := commander.
+				Set(&setResult, key, newValue, SetOption{NX: true}).
+				Commit()
+			conn = getConn()
+			defer conn.Close()
+			var getResult int
+			newErrSend := conn.Send("GET", key)
+			results, newErrResult := redis.Values(conn.Do(""))
+			_, newErrScan := redis.Scan(results, &getResult)
+
+			Expect(errSend).To(BeNil())
+			Expect(newErrSend).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(newErrResult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(newErrScan).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(newSetResult).To(Equal(""))
+			Expect(getResult).To(Equal(value))
+		})
+
+		It("should return the results of a expired SET with XX option", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			defer conn.Close()
+			commander := New(conn)
+			var setResult string
+			cmdErr := commander.
+				Set(&setResult, key, value, SetOption{XX: true}).
+				Commit()
+
+			conn = getConn()
+			defer conn.Close()
+			var getResult int
+			errSend := conn.Send("GET", key)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &getResult)
+
+			Expect(errSend).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(setResult).To(Equal(""))
+			Expect(getResult).To(Equal(0))
+		})
+
+	})
+
+	Describe("Get", func() {
+		It("should return the results of a valid GET", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			defer conn.Close()
+			var setResult string
+			errSend := conn.Send("SET", key, value)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult)
 			conn = getConn()
 			commander := New(conn)
 			var getResult int
@@ -204,51 +244,16 @@ var _ = Describe("Commander", func() {
 				Get(&getResult, key).
 				Commit()
 			Expect(errSend).To(BeNil())
-			Expect(err).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
 			Expect(cmdErr).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
 			Expect(getResult).To(Equal(9))
 		})
-
-		It("should return the results of a valid GET", func() {
-			key := "SomeKey"
-			value := int64(9)
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("GET", key).Expect(value)
-			commander := New(conn)
-			var getResult int64
-			cmdErr := commander.Get(&getResult, key).Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(getResult).To(Equal(value))
-
-			value2 := "SomeValue"
-			conn = redigomock.NewConn()
-			conn.Command("GET", key).Expect(value2)
-			commander = New(conn)
-			var getResult2 string
-			cmdErr = commander.Get(&getResult2, key).Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(getResult2).To(Equal(value2))
-		})
-
-		It("should return the error of a invalid GET", func() {
-			key := "SomeKey"
-			value := "SomeValue"
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("GET", key).Expect(value)
-			commander := New(conn)
-			var getResult int64
-			cmdErr := commander.Get(&getResult, key).Commit()
-			Expect(cmdErr).To(Equal(errors.New("redigo.Scan: cannot assign to dest 0: cannot convert from Redis simple string to *int64")))
-			Expect(getResult).To(Equal(int64(0)))
-		})
 	})
 
 	Describe("Select", func() {
-
-		It("should return the real results of a valid SELECT", func() {
+		It("should return the results of a valid SELECT", func() {
 			conn := getConn()
 			commander := New(conn)
 			var selectResult string
@@ -258,92 +263,46 @@ var _ = Describe("Commander", func() {
 			Expect(cmdErr).To(BeNil())
 			Expect(selectResult).To(Equal("OK"))
 		})
-
-		It("should return the results of a valid SELECT", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("SELECT", 0).Expect("OK")
-			commander := New(conn)
-			var selectResult string
-			cmdErr := commander.Select(&selectResult, 0).Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(selectResult).To(Equal("OK"))
-		})
-
-		It("should return the error of a invalid SELECT", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("SELECT", -1).ExpectError(errors.New("ERR DB index is out of range"))
-			commander := New(conn)
-			var selectResult string
-			cmdErr := commander.Select(&selectResult, -1).Commit()
-			Expect(cmdErr).To(Equal(errors.New("ERR DB index is out of range")))
-			Expect(selectResult).To(Equal(""))
-		})
 	})
 
 	Describe("Expire", func() {
-		It("should return the real results of a valid GET", func() {
+		It("should return the results of a valid GET", func() {
 			key := "SomeKey"
 			value := 9
 			conn := getConn()
 			var setResult string
 			errSend := conn.Send("SET", key, value)
-			results, err := redis.Values(conn.Do(""))
-			_, err = redis.Scan(results, &setResult)
-			if err != nil {
-				panic(err)
-			}
-			Expect(errSend).To(BeNil())
-			Expect(setResult).To(Equal("OK"))
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult)
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
 			var expireResult int
 			cmdErr := commander.Expire(&expireResult, key, 1).Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(expireResult).To(Equal(1))
-
 			time.Sleep(1100 * time.Millisecond)
-
 			conn = getConn()
 			var getResult int
-			errSend = conn.Send("GET", key)
-			results, err = redis.Values(conn.Do(""))
-			_, err = redis.Scan(results, &getResult)
-			if err != nil {
-				panic(err)
-			}
+			errSendGet := conn.Send("GET", key)
+			results, errResultGet := redis.Values(conn.Do(""))
+			_, errScanGet := redis.Scan(results, &getResult)
 			conn.Close()
-			Expect(errSend).To(BeNil())
-			Expect(err).To(BeNil())
-			Expect(cmdErr).To(BeNil())
-			Expect(getResult).To(Equal(0))
-		})
 
-		It("should return the results of a valid EXPIRE", func() {
-			key := "SomeKey"
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("EXPIRE", key, 5).Expect(int64(1))
-			commander := New(conn)
-			var expireResult int
-			cmdErr := commander.Expire(&expireResult, key, 5).Commit()
+			Expect(errSend).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
 			Expect(cmdErr).To(BeNil())
 			Expect(expireResult).To(Equal(1))
-
-			conn = redigomock.NewConn()
-			conn.Command("EXPIRE", "NotExistKey", 5).Expect(int64(0))
-			commander = New(conn)
-			var expireResult2 int
-			cmdErr = commander.Expire(&expireResult2, "NotExistKey", 5).Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(expireResult2).To(Equal(0))
+			Expect(errSend).To(BeNil())
+			Expect(errSendGet).To(BeNil())
+			Expect(errResultGet).To(BeNil())
+			Expect(errScanGet).To(BeNil())
+			Expect(getResult).To(Equal(0))
 		})
 	})
 
 	Describe("Del", func() {
-		It("should return the real results of a valid DEL", func() {
+		It("should return the results of a valid DEL", func() {
 			key := "SomeKey"
 			value := 9
 			conn := getConn()
@@ -377,26 +336,6 @@ var _ = Describe("Commander", func() {
 			Expect(err).To(BeNil())
 			Expect(cmdErr).To(BeNil())
 			Expect(getResult).To(Equal(0))
-		})
-
-		It("should return the results of a valid DEL", func() {
-			key := "SomeKey"
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("DEL", key, "NotExistKey").Expect(int64(1))
-			commander := New(conn)
-			var delResult int
-			cmdErr := commander.Del(&delResult, key, "NotExistKey").Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(delResult).To(Equal(1))
-
-			conn = redigomock.NewConn()
-			conn.Command("DEL", "NotExistKey").Expect(int64(0))
-			commander = New(conn)
-			var delResult2 int
-			cmdErr = commander.Del(&delResult2, "NotExistKey").Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(delResult2).To(Equal(0))
 		})
 	})
 
@@ -436,29 +375,6 @@ var _ = Describe("Commander", func() {
 			Expect(cmdErr).To(BeNil())
 			Expect(getResult).To(Equal(10))
 		})
-
-		It("should return the results of a valid INCR", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("INCR", "ValueEqual10").Expect(int64(11))
-			commander := New(conn)
-			var delResult int
-			cmdErr := commander.Incr(&delResult, "ValueEqual10").Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(delResult).To(Equal(11))
-		})
-
-		It("should return the error of a invalid INCR", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("INCR", "ValueEqualString").
-				ExpectError(errors.New("ERR value is not an integer or out of range"))
-			commander := New(conn)
-			var delResult int
-			cmdErr := commander.Incr(&delResult, "ValueEqualString").Commit()
-			Expect(cmdErr).To(Equal(errors.New("ERR value is not an integer or out of range")))
-			Expect(delResult).To(Equal(0))
-		})
 	})
 
 	Describe("Decr", func() {
@@ -496,29 +412,6 @@ var _ = Describe("Commander", func() {
 			Expect(err).To(BeNil())
 			Expect(cmdErr).To(BeNil())
 			Expect(getResult).To(Equal(8))
-		})
-
-		It("should return the results of a valid DECR", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("DECR", "ValueEqual10").Expect(int64(9))
-			commander := New(conn)
-			var delResult int
-			cmdErr := commander.Decr(&delResult, "ValueEqual10").Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(delResult).To(Equal(9))
-		})
-
-		It("should return the error of a invalid DECR", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("DECR", "ValueEqualString").
-				ExpectError(errors.New("ERR value is not an integer or out of range"))
-			commander := New(conn)
-			var delResult int
-			cmdErr := commander.Decr(&delResult, "ValueEqualString").Commit()
-			Expect(cmdErr).To(Equal(errors.New("ERR value is not an integer or out of range")))
-			Expect(delResult).To(Equal(0))
 		})
 	})
 
@@ -558,17 +451,6 @@ var _ = Describe("Commander", func() {
 			Expect(cmdErr).To(BeNil())
 			Expect(getResult).To(Equal(0))
 		})
-
-		It("should return the results of a valid FLUSHALL", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("FLUSHALL", "ASYNC").Expect("OK")
-			commander := New(conn)
-			var flushResult string
-			cmdErr := commander.FlushAll(&flushResult, true).Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(flushResult).To(Equal("OK"))
-		})
 	})
 
 	Describe("Keys", func() {
@@ -596,18 +478,6 @@ var _ = Describe("Commander", func() {
 			Expect(cmdErr).To(BeNil())
 			Expect(keysResult).To(ContainElements("SomeKey1", "SomeKey2"))
 		})
-
-		It("should return the results of a valid KEYS", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("KEYS", "*pattern*").
-				ExpectStringSlice("1pattern", "pattern1", "1pattern1")
-			commander := New(conn)
-			var keysResult []string
-			cmdErr := commander.Keys(&keysResult, "*pattern*").Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(keysResult).To(ContainElements("1pattern", "pattern1", "1pattern1"))
-		})
 	})
 
 	Describe("Ping", func() {
@@ -620,16 +490,6 @@ var _ = Describe("Commander", func() {
 			Expect(pingResult).To(Equal("PingMsg"))
 		})
 
-		It("should return the results of a valid PING", func() {
-			conn := redigomock.NewConn()
-			defer conn.Close()
-			conn.Command("PING").Expect("PingMsg")
-			commander := New(conn)
-			var pingResult string
-			cmdErr := commander.Ping(&pingResult, "").Commit()
-			Expect(cmdErr).To(BeNil())
-			Expect(pingResult).To(Equal("PingMsg"))
-		})
 	})
 
 	Describe("XAdd", func() {
