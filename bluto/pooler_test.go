@@ -16,9 +16,7 @@ var _ = Describe("Pooler", func() {
 	var getCorrectConfig = func() bluto.Config {
 		address := os.Getenv("REDIS_ADDRESS")
 		return bluto.Config{
-			Address:               address,
-			ConnectTimeoutSeconds: 10,
-			ReadTimeoutSeconds:    10,
+			Address: address,
 		}
 	}
 
@@ -44,13 +42,16 @@ var _ = Describe("Pooler", func() {
 		})
 
 		It("should not connect to the redis server with incorrect info", func() {
-			pool, err := bluto.GetPool(getWrongConfig())
+			pool, _ := bluto.GetPool(getWrongConfig())
+			conn := pool.Get()
+			errSend := conn.Send("PING")
+			_, errDo := conn.Do("")
+			errClose := pool.Close()
 
-			Expect(err).To(BeNil())
+			Expect(errSend).To(Not(BeNil()))
+			Expect(errDo).To(Not(BeNil()))
 			Expect(pool).To(Not(BeNil()))
-
-			err = pool.Close()
-			Expect(err).To(BeNil())
+			Expect(errClose).To(BeNil())
 		})
 	})
 })
