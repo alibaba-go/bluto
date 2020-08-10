@@ -1,448 +1,636 @@
-package commander
+package commander_test
 
 import (
-	"math/rand"
 	"os"
-	"testing"
 	"time"
 
-	"github.com/bxcodec/faker/v3"
-
+	"git.alibaba.ir/rd/zebel-the-sailor-bluto/bluto"
 	"github.com/gomodule/redigo/redis"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
-	"github.com/stretchr/testify/suite"
+	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
 )
 
-func getPool() *redis.Pool {
-	address := os.Getenv("REDIS_ADDRESS")
-	pool := &redis.Pool{
-		Dial: func() (redis.Conn, error) {
-			return redis.Dial(
-				"tcp",
-				address,
-				redis.DialPassword(""),
-				redis.DialConnectTimeout(5*time.Second),
-				redis.DialReadTimeout(5*time.Second),
-				redis.DialWriteTimeout(5*time.Second),
-			)
-		},
-		MaxIdle:         10,
-		MaxActive:       10,
-		IdleTimeout:     60 * time.Second,
-		Wait:            true,
-		MaxConnLifetime: 120 * time.Second,
+var _ = Describe("Commander", func() {
+
+	// --------------------------------- global vars
+
+	var pool *redis.Pool
+	var getConn func() redis.Conn
+
+	// --------------------------------- global functions
+
+	var getCorrectConfig = func() bluto.Config {
+		address := os.Getenv("REDIS_ADDRESS")
+		return bluto.Config{
+			Address:               address,
+			ConnectTimeoutSeconds: 10,
+			ReadTimeoutSeconds:    10,
+		}
 	}
-	return pool
-}
 
-// CommanderSuite test Commander methods
-type CommanderSuite struct {
-	suite.Suite
-	pool *redis.Pool
-}
+	// --------------------------------- before and after hooks
 
-// TestCommanderSuite run suite tests
-func TestCommanderSuite(t *testing.T) {
-	suite.Run(t, new(CommanderSuite))
-}
-
-// SetupAllTest run before all tests and setup redis pool
-func (suite *CommanderSuite) SetupSuite() {
-	suite.pool = getPool()
-}
-
-// TearDownSuite run after all tests and close redis pool
-func (suite *CommanderSuite) TearDownSuite() {
-	err := suite.pool.Close()
-	suite.NoError(err)
-}
-
-// TearDownTest run after each tests and Clear redis
-func (suite *CommanderSuite) TearDownTest() {
-	conn := suite.pool.Get()
-	cmd := New(conn)
-	var flushResult string
-	err := cmd.
-		FlushAll(&flushResult, false).
-		Commit()
-	suite.Nil(err)
-	suite.Equal(flushResult, "OK")
-}
-
-func (suite *CommanderSuite) TestNew() {
-	conn := suite.pool.Get()
-	defer func() {
-		err := conn.Close()
+	BeforeSuite(func() {
+		newPool, err := bluto.GetPool(getCorrectConfig())
 		if err != nil {
 			panic(err)
 		}
-	}()
-	cmd := New(conn)
-	suite.NotNil(cmd)
-	suite.IsType(cmd, &Commander{})
-}
+		pool = newPool
+		getConn = func() redis.Conn {
+			return pool.Get()
+		}
+	})
 
-func (suite *CommanderSuite) TestGet() {
-	key := "SomeKey"
-	value := faker.Word()
-	conn := suite.pool.Get()
-	var setResult string
-	errSend := conn.Send("SET", key, value)
-	results, errResult := redis.Values(conn.Do(""))
-	conn.Close()
-	_, errScan := redis.Scan(results, &setResult)
-	conn = suite.pool.Get()
-	cmd := New(conn)
-	var getResult string
-	cmdErr := cmd.
-		Get(&getResult, key).
-		Commit()
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Equal(setResult, "OK")
-	suite.Equal(getResult, value)
-}
+	AfterSuite(func() {
+		err := pool.Close()
+		if err != nil {
+			panic(err)
+		}
+	})
 
-func (suite *CommanderSuite) TestSelect() {
-	conn := suite.pool.Get()
-	cmd := New(conn)
-	var selectResult string
-	index := rand.Intn(10)
-	cmdErr := cmd.
-		Select(&selectResult, index).
-		Commit()
-	suite.Nil(cmdErr)
-	suite.Equal(selectResult, "OK")
-}
+	BeforeEach(func() {
+		conn := getConn()
+		commander := New(conn)
+		var flushResult string
+		err := commander.
+			FlushAll(&flushResult, false).
+			Commit()
+		if err != nil {
+			panic(err)
+		}
+	})
 
-func (suite *CommanderSuite) TestExpire() {
-	key := "SomeKey"
-	value := faker.Word()
-	conn := suite.pool.Get()
-	var setResult string
-	errSend := conn.Send("SET", key, value)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &setResult)
-	conn.Close()
-	conn = suite.pool.Get()
-	cmd := New(conn)
-	var expireResult int
-	cmdErr := cmd.Expire(&expireResult, key, 1).Commit()
-	time.Sleep(1100 * time.Millisecond)
-	conn = suite.pool.Get()
-	var getResult string
-	errSendGet := conn.Send("GET", key)
-	results, errResultGet := redis.Values(conn.Do(""))
-	_, errScanGet := redis.Scan(results, &getResult)
-	conn.Close()
+	// --------------------------------- tests
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Nil(errSendGet)
-	suite.Nil(errScanGet)
-	suite.Nil(errResultGet)
-	suite.Equal(setResult, "OK")
-	suite.Equal(expireResult, 1)
-	suite.Equal(getResult, "")
-}
+	Describe("New method", func() {
+		It("should return a new commander", func() {
+			pool, err := bluto.GetPool(getCorrectConfig())
+			defer func() {
+				err := pool.Close()
+				if err != nil {
+					panic(err)
+				}
+			}()
+			if err != nil {
+				panic(err)
+			}
+			conn := pool.Get()
+			defer func() {
+				err := conn.Close()
+				if err != nil {
+					panic(err)
+				}
+			}()
+			commander := New(conn)
+			Expect(commander).To(Not(BeNil()))
+			Expect(commander).To(BeAssignableToTypeOf(&Commander{}))
+		})
+	})
 
-func (suite *CommanderSuite) TestDel() {
-	key := "SomeKey"
-	value := faker.Word()
-	conn := suite.pool.Get()
-	var setResult string
-	errSend := conn.Send("SET", key, value)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &setResult)
-	conn.Close()
-	conn = suite.pool.Get()
-	cmd := New(conn)
-	var delResult int
-	cmdErr := cmd.Del(&delResult, key).Commit()
-	conn = suite.pool.Get()
-	var getResult string
-	errSendGet := conn.Send("GET", key)
-	results, errResultGet := redis.Values(conn.Do(""))
-	_, errScanGet := redis.Scan(results, &getResult)
-	conn.Close()
+	Describe("Set", func() {
+		It("should return the results of a valid SET", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			commander := New(conn)
+			var setResult string
+			cmdErr := commander.
+				Set(&setResult, key, value, SetOption{}).
+				Commit()
+			conn = getConn()
+			var getResult int
+			errSend := conn.Send("GET", key)
+			results, errRsult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &getResult)
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Nil(errSendGet)
-	suite.Nil(errScanGet)
-	suite.Nil(errResultGet)
-	suite.Equal(setResult, "OK")
-	suite.Equal(delResult, 1)
-	suite.Equal(getResult, "")
-}
+			conn.Close()
+			Expect(errSend).To(BeNil())
+			Expect(errRsult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(getResult).To(Equal(9))
+		})
 
-func (suite *CommanderSuite) TestIncr() {
-	key := "SomeKey"
-	randIntList, _ := faker.RandomInt(10, 100)
-	value := randIntList[0]
-	conn := suite.pool.Get()
-	var setResult string
-	errSend := conn.Send("SET", key, value)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &setResult)
-	conn.Close()
-	conn = suite.pool.Get()
-	cmd := New(conn)
-	var incrResult int
-	cmdErr := cmd.Incr(&incrResult, key).Commit()
-	conn = suite.pool.Get()
-	var getResult int
-	errSendGet := conn.Send("GET", key)
-	results, errResultGet := redis.Values(conn.Do(""))
-	_, errScanGet := redis.Scan(results, &getResult)
-	conn.Close()
+		It("should return the results of a expired SET with EX option", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			commander := New(conn)
+			var setResult string
+			cmdErr := commander.
+				Set(&setResult, key, value, SetOption{EX: 1}).
+				Commit()
+			time.Sleep(1100 * time.Millisecond)
+			conn = getConn()
+			defer conn.Close()
+			var getResult int
+			errSend := conn.Send("GET", key)
+			results, errRsult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &getResult)
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Nil(errSendGet)
-	suite.Nil(errScanGet)
-	suite.Nil(errResultGet)
-	suite.Equal(setResult, "OK")
-	suite.Equal(incrResult, value+1)
-	suite.Equal(getResult, value+1)
-}
+			Expect(errSend).To(BeNil())
+			Expect(errRsult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(getResult).To(Equal(0))
+		})
 
-func (suite *CommanderSuite) TestDecr() {
-	key := "SomeKey"
-	randIntList, _ := faker.RandomInt(10, 100)
-	value := randIntList[0]
-	conn := suite.pool.Get()
-	var setResult string
-	errSend := conn.Send("SET", key, value)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &setResult)
-	conn.Close()
-	conn = suite.pool.Get()
-	cmd := New(conn)
-	var incrResult int
-	cmdErr := cmd.Decr(&incrResult, key).Commit()
-	conn = suite.pool.Get()
-	var getResult int
-	errSendGet := conn.Send("GET", key)
-	results, errResultGet := redis.Values(conn.Do(""))
-	_, errScanGet := redis.Scan(results, &getResult)
-	conn.Close()
+		It("should return the results of a expired SET with PX option", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			commander := New(conn)
+			var setResult string
+			cmdErr := commander.
+				Set(&setResult, key, value, SetOption{PX: 1000}).
+				Commit()
+			time.Sleep(1100 * time.Millisecond)
+			conn = getConn()
+			defer conn.Close()
+			var getResult int
+			errSend := conn.Send("GET", key)
+			results, errRsult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &getResult)
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Nil(errSendGet)
-	suite.Nil(errScanGet)
-	suite.Nil(errResultGet)
-	suite.Equal(setResult, "OK")
-	suite.Equal(incrResult, value-1)
-	suite.Equal(getResult, value-1)
-}
+			Expect(errSend).To(BeNil())
+			Expect(errRsult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(getResult).To(Equal(0))
+		})
 
-func (suite *CommanderSuite) TestPing() {
-	conn := suite.pool.Get()
-	cmd := New(conn)
-	var pingResult string
-	cmdErr := cmd.Ping(&pingResult, "PingMsg").Commit()
-	suite.Nil(cmdErr)
-	suite.Equal(pingResult, "PingMsg")
-}
+		It("should return the results of a expired SET with NX option", func() {
+			key := "SomeKey"
+			value := 9
+			newValue := 10
+			conn := getConn()
+			defer conn.Close()
+			var setResult string
+			errSend := conn.Send("SET", key, value)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult)
+			conn = getConn()
+			commander := New(conn)
+			var newSetResult string
+			cmdErr := commander.
+				Set(&setResult, key, newValue, SetOption{NX: true}).
+				Commit()
+			conn = getConn()
+			defer conn.Close()
+			var getResult int
+			newErrSend := conn.Send("GET", key)
+			results, newErrResult := redis.Values(conn.Do(""))
+			_, newErrScan := redis.Scan(results, &getResult)
 
-func (suite *CommanderSuite) TestKeys() {
-	key1 := "SomeKey1"
-	value1 := faker.Word()
-	key2 := "SomeKey2"
-	value2 := faker.Word()
-	conn := suite.pool.Get()
-	var setResult string
-	errSend1 := conn.Send("SET", key1, value1)
-	errSend2 := conn.Send("SET", key2, value2)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &setResult)
-	conn.Close()
-	conn = suite.pool.Get()
-	cmd := New(conn)
-	var keysResult []string
-	cmdErr := cmd.Keys(&keysResult, "*Key*").Commit()
-	suite.Nil(errSend1)
-	suite.Nil(errSend2)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Equal(setResult, "OK")
-	suite.Contains(keysResult, key1, key2)
-}
+			Expect(errSend).To(BeNil())
+			Expect(newErrSend).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(newErrResult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(newErrScan).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(newSetResult).To(Equal(""))
+			Expect(getResult).To(Equal(value))
+		})
 
-func (suite *CommanderSuite) TestFlushAll() {
-	key := "SomeKey"
-	value := faker.Word()
-	conn := suite.pool.Get()
-	var setResult string
-	errSend := conn.Send("SET", key, value)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &setResult)
-	conn.Close()
-	conn = suite.pool.Get()
-	cmd := New(conn)
-	var flushResult string
-	cmdErr := cmd.FlushAll(&flushResult, true).Commit()
-	conn = suite.pool.Get()
-	var getResult string
-	errSendGet := conn.Send("GET", key)
-	results, errResultGet := redis.Values(conn.Do(""))
-	_, errScanGet := redis.Scan(results, &getResult)
-	conn.Close()
+		It("should return the results of a expired SET with XX option", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			defer conn.Close()
+			commander := New(conn)
+			var setResult string
+			cmdErr := commander.
+				Set(&setResult, key, value, SetOption{XX: true}).
+				Commit()
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Nil(errSendGet)
-	suite.Nil(errScanGet)
-	suite.Nil(errResultGet)
-	suite.Equal(setResult, "OK")
-	suite.Equal(flushResult, "OK")
-	suite.Equal(getResult, "")
-}
+			conn = getConn()
+			defer conn.Close()
+			var getResult int
+			errSend := conn.Send("GET", key)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &getResult)
 
-func (suite *CommanderSuite) TestSet() {
-	key := "SomeKey"
-	value := faker.Word()
-	conn := suite.pool.Get()
-	cmd := New(conn)
-	var setResult string
-	cmdErr := cmd.
-		Set(&setResult, key, value, SetOption{}).
-		Commit()
-	conn = suite.pool.Get()
-	var getResult string
-	errSend := conn.Send("GET", key)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &getResult)
-	conn.Close()
+			Expect(errSend).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(setResult).To(Equal(""))
+			Expect(getResult).To(Equal(0))
+		})
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Equal(setResult, "OK")
-	suite.Equal(getResult, value)
-}
+	})
 
-func (suite *CommanderSuite) TestSetWithEX() {
-	key := "SomeKey"
-	value := faker.Word()
-	conn := suite.pool.Get()
-	cmd := New(conn)
-	var setResult string
-	cmdErr := cmd.
-		Set(&setResult, key, value, SetOption{EX: 1}).
-		Commit()
-	time.Sleep(1100 * time.Millisecond)
-	conn = suite.pool.Get()
-	var getResult string
-	errSend := conn.Send("GET", key)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &getResult)
-	conn.Close()
+	Describe("Get", func() {
+		It("should return the results of a valid GET", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			defer conn.Close()
+			var setResult string
+			errSend := conn.Send("SET", key, value)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult)
+			conn = getConn()
+			commander := New(conn)
+			var getResult int
+			cmdErr := commander.
+				Get(&getResult, key).
+				Commit()
+			Expect(errSend).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(getResult).To(Equal(9))
+		})
+	})
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Equal(setResult, "OK")
-	suite.Equal(getResult, "")
-}
+	Describe("Select", func() {
+		It("should return the results of a valid SELECT", func() {
+			conn := getConn()
+			commander := New(conn)
+			var selectResult string
+			cmdErr := commander.
+				Select(&selectResult, 3).
+				Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(selectResult).To(Equal("OK"))
+		})
+	})
 
-func (suite *CommanderSuite) TestSetWithPX() {
-	key := "SomeKey"
-	value := faker.Word()
-	conn := suite.pool.Get()
-	cmd := New(conn)
-	var setResult string
-	cmdErr := cmd.
-		Set(&setResult, key, value, SetOption{PX: 1000}).
-		Commit()
-	time.Sleep(1100 * time.Millisecond)
-	conn = suite.pool.Get()
-	defer conn.Close()
-	var getResult string
-	errSend := conn.Send("GET", key)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &getResult)
+	Describe("Expire", func() {
+		It("should return the results of a valid GET", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			var setResult string
+			errSend := conn.Send("SET", key, value)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult)
+			conn.Close()
+			conn = getConn()
+			commander := New(conn)
+			var expireResult int
+			cmdErr := commander.Expire(&expireResult, key, 1).Commit()
+			time.Sleep(1100 * time.Millisecond)
+			conn = getConn()
+			var getResult int
+			errSendGet := conn.Send("GET", key)
+			results, errResultGet := redis.Values(conn.Do(""))
+			_, errScanGet := redis.Scan(results, &getResult)
+			conn.Close()
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Equal(setResult, "OK")
-	suite.Equal(getResult, "")
-}
+			Expect(errSend).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(cmdErr).To(BeNil())
+			Expect(expireResult).To(Equal(1))
+			Expect(errSend).To(BeNil())
+			Expect(errSendGet).To(BeNil())
+			Expect(errResultGet).To(BeNil())
+			Expect(errScanGet).To(BeNil())
+			Expect(getResult).To(Equal(0))
+		})
+	})
 
-func (suite *CommanderSuite) TestSetWithNX() {
-	key := "SomeKey"
-	value := faker.Word()
-	newValue := faker.Word()
-	conn := suite.pool.Get()
-	var setResult string
-	errSend := conn.Send("SET", key, value)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &setResult)
-	conn.Close()
-	conn = suite.pool.Get()
-	cmd := New(conn)
-	var setResultWithNX string
-	cmdErr := cmd.
-		Set(&setResultWithNX, key, newValue, SetOption{NX: true}).
-		Commit()
-	conn = suite.pool.Get()
-	var getResult string
-	errSendGet := conn.Send("GET", key)
-	results, errResultGet := redis.Values(conn.Do(""))
-	_, errScanGet := redis.Scan(results, &getResult)
-	conn.Close()
+	Describe("Del", func() {
+		It("should return the results of a valid DEL", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			var setResult string
+			errSend := conn.Send("SET", key, value)
+			results, err := redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &setResult)
+			if err != nil {
+				panic(err)
+			}
+			Expect(errSend).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			conn.Close()
+			conn = getConn()
+			commander := New(conn)
+			var delResult int
+			cmdErr := commander.Del(&delResult, key).Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(delResult).To(Equal(1))
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Nil(errSendGet)
-	suite.Nil(errScanGet)
-	suite.Nil(errResultGet)
-	suite.Equal(setResult, "OK")
-	suite.Equal(setResultWithNX, "")
-	suite.Equal(getResult, value)
-}
+			conn = getConn()
+			var getResult int
+			errSend = conn.Send("GET", key)
+			results, err = redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &getResult)
+			if err != nil {
+				panic(err)
+			}
+			conn.Close()
+			Expect(errSend).To(BeNil())
+			Expect(err).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(getResult).To(Equal(0))
+		})
+	})
 
-func (suite *CommanderSuite) TestSetWithXX() {
-	key := "SomeKey"
-	value := faker.Word()
-	conn := suite.pool.Get()
-	cmd := New(conn)
-	var setResult string
-	cmdErr := cmd.
-		Set(&setResult, key, value, SetOption{XX: true}).
-		Commit()
-	conn = suite.pool.Get()
-	var getResult string
-	errSend := conn.Send("GET", key)
-	results, errResult := redis.Values(conn.Do(""))
-	_, errScan := redis.Scan(results, &getResult)
-	conn.Close()
+	Describe("Incr", func() {
+		It("should return the real results of a valid INCR", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			var setResult string
+			errSend := conn.Send("SET", key, value)
+			results, err := redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &setResult)
+			if err != nil {
+				panic(err)
+			}
+			Expect(errSend).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			conn.Close()
+			conn = getConn()
+			commander := New(conn)
+			var incrResult int
+			cmdErr := commander.Incr(&incrResult, key).Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(incrResult).To(Equal(10))
 
-	suite.Nil(errSend)
-	suite.Nil(errScan)
-	suite.Nil(errResult)
-	suite.Nil(cmdErr)
-	suite.Equal(setResult, "")
-	suite.Equal(getResult, "")
-}
+			conn = getConn()
+			var getResult int
+			errSend = conn.Send("GET", key)
+			results, err = redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &getResult)
+			if err != nil {
+				panic(err)
+			}
+			conn.Close()
+			Expect(errSend).To(BeNil())
+			Expect(err).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(getResult).To(Equal(10))
+		})
+	})
+
+	Describe("Decr", func() {
+		It("should return the real results of a valid DECR", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			var setResult string
+			errSend := conn.Send("SET", key, value)
+			results, err := redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &setResult)
+			if err != nil {
+				panic(err)
+			}
+			Expect(errSend).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			conn.Close()
+			conn = getConn()
+			commander := New(conn)
+			var decrResult int
+			cmdErr := commander.Decr(&decrResult, key).Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(decrResult).To(Equal(8))
+
+			conn = getConn()
+			var getResult int
+			errSend = conn.Send("GET", key)
+			results, err = redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &getResult)
+			if err != nil {
+				panic(err)
+			}
+			conn.Close()
+			Expect(errSend).To(BeNil())
+			Expect(err).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(getResult).To(Equal(8))
+		})
+	})
+
+	Describe("FlushAll", func() {
+		It("should return the real results of a valid DECR", func() {
+			key := "SomeKey"
+			value := 9
+			conn := getConn()
+			var setResult string
+			errSend := conn.Send("SET", key, value)
+			results, err := redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &setResult)
+			if err != nil {
+				panic(err)
+			}
+			Expect(errSend).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			conn.Close()
+			conn = getConn()
+			commander := New(conn)
+			var flushResult string
+			cmdErr := commander.FlushAll(&flushResult, true).Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(flushResult).To(Equal("OK"))
+
+			conn = getConn()
+			var getResult int
+			errSend = conn.Send("GET", key)
+			results, err = redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &getResult)
+			if err != nil {
+				panic(err)
+			}
+			conn.Close()
+			Expect(errSend).To(BeNil())
+			Expect(err).To(BeNil())
+			Expect(cmdErr).To(BeNil())
+			Expect(getResult).To(Equal(0))
+		})
+	})
+
+	Describe("Keys", func() {
+		It("should return the real results of a valid KEYS", func() {
+			key1 := "SomeKey1"
+			value1 := 9
+			key2 := "SomeKey2"
+			value2 := "SomeValue"
+			conn := getConn()
+			var setResult string
+			errSend := conn.Send("SET", key1, value1)
+			errSend = conn.Send("SET", key2, value2)
+			results, err := redis.Values(conn.Do(""))
+			_, err = redis.Scan(results, &setResult)
+			if err != nil {
+				panic(err)
+			}
+			Expect(errSend).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			conn.Close()
+			conn = getConn()
+			commander := New(conn)
+			var keysResult []string
+			cmdErr := commander.Keys(&keysResult, "*Key*").Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(keysResult).To(ContainElements("SomeKey1", "SomeKey2"))
+		})
+	})
+
+	Describe("Ping", func() {
+		It("should return the real results of a valid PING", func() {
+			conn := getConn()
+			commander := New(conn)
+			var pingResult string
+			cmdErr := commander.Ping(&pingResult, "PingMsg").Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(pingResult).To(Equal("PingMsg"))
+		})
+
+	})
+
+	Describe("XAdd", func() {
+		It("should return the results of a valid XAdd", func() {
+		})
+	})
+
+	Describe("Integration test command and commit", func() {
+
+		// --------------------------------- tests
+
+		It("should return the results of a valid chain of expire commands", func() {
+			conn := getConn()
+			commander := New(conn)
+			key := "SomeKey"
+			var selectResult string
+			var setResult string
+			var expireResult1 int
+			var expireResult2 int
+			var getResult1 int
+			var getResult2 int
+
+			cmdErr := commander.
+				Select(&selectResult, 0).
+				Set(&setResult, key, 9, SetOption{}).
+				Expire(&expireResult1, key, 1).
+				Expire(&expireResult2, "NotExistKey", 1).
+				Get(&getResult1, key).
+				Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(expireResult1).To(Equal(1))
+			Expect(expireResult2).To(Equal(0))
+			Expect(getResult1).To(Equal(9))
+
+			//sleep 2 second to expire key
+			time.Sleep(2 * time.Second)
+
+			conn = getConn()
+			commander = New(conn)
+			cmdErr = commander.
+				Select(&selectResult, 0).
+				Get(&getResult2, key).
+				Commit()
+			Expect(cmdErr).To(BeNil())
+			Expect(getResult2).To(Equal(0))
+		})
+
+		It("should return the results of a valid chain of del and flush commands", func() {
+			conn := getConn()
+			commander := New(conn)
+			key1 := "SomeKey1"
+			key2 := "SomeKey2"
+			var selectResult string
+			var setResult1 string
+			var setResult2 string
+			var keysResult []string
+			var delResult int
+			var getResult1 int
+			var getResult2 int
+			var flushResult string
+
+			cmdErr := commander.
+				Select(&selectResult, 0).
+				Set(&setResult1, key1, 9, SetOption{}).
+				Set(&setResult2, key2, 9, SetOption{}).
+				Keys(&keysResult, "*Key*").
+				Del(&delResult, key1, "NotExistKey").
+				Get(&getResult1, key1).
+				FlushAll(&flushResult, true).
+				Get(&getResult2, key2).
+				Commit()
+
+			Expect(cmdErr).To(BeNil())
+			Expect(setResult1).To(Equal("OK"))
+			Expect(setResult2).To(Equal("OK"))
+			Expect(keysResult).To(ContainElements("SomeKey1", "SomeKey2"))
+			Expect(delResult).To(Equal(1))
+			Expect(getResult1).To(Equal(0))
+			Expect(flushResult).To(Equal("OK"))
+			Expect(getResult2).To(Equal(0))
+		})
+
+		It("should return the results of a valid chain of commands", func() {
+			conn := getConn()
+			commander := New(conn)
+
+			key := "someKey"
+			pingMsg := "PingMessage"
+			var selectResult string
+			var setResult string
+			var incrResult int
+			var getResult int
+			var decrResult int
+			var pingResult string
+
+			cmdErr := commander.
+				Select(&selectResult, 0).
+				Set(&setResult, key, 9, SetOption{}).
+				Incr(&incrResult, key).
+				Get(&getResult, key).
+				Decr(&decrResult, key).
+				Ping(&pingResult, pingMsg).
+				Commit()
+
+			Expect(cmdErr).To(BeNil())
+			Expect(selectResult).To(Equal("OK"))
+			Expect(setResult).To(Equal("OK"))
+			Expect(incrResult).To(Equal(10))
+			Expect(getResult).To(Equal(10))
+			Expect(decrResult).To(Equal(9))
+			Expect(pingResult).To(Equal(pingMsg))
+		})
+
+		It("should return the errors of an invalid chain of commands", func() {
+			conn := getConn()
+			commander := New(conn)
+
+			key := "someKey"
+
+			var selectResult string
+			var setResult string
+			var nonExistentResult interface{}
+			var incrResult int
+			var getResult int
+
+			cmdErr := commander.
+				Select(&selectResult, 0).
+				Set(&setResult, key, 9, SetOption{}).
+				Command(&nonExistentResult, "SOMENONEXISTENTCOMMAND", key, 9).
+				Incr(&incrResult, key).
+				Get(&getResult, key).
+				Commit()
+
+			Expect(cmdErr).To(Not(BeNil()))
+			Expect(selectResult).To(Equal("OK"))
+			Expect(setResult).To(Equal("OK"))
+			Expect(nonExistentResult).To(BeNil())
+			Expect(incrResult).To(Equal(0))
+			Expect(getResult).To(Equal(0))
+		})
+	})
+
+})
