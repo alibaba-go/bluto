@@ -19,6 +19,7 @@ var _ = Describe("Commander", func() {
 
 	var pool *redis.Pool
 	var getConn func() redis.Conn
+	var getWrongConn func() redis.Conn
 
 	// --------------------------------- global functions
 
@@ -26,6 +27,14 @@ var _ = Describe("Commander", func() {
 		address := os.Getenv("REDIS_ADDRESS")
 		return bluto.Config{
 			Address:               address,
+			ConnectTimeoutSeconds: 10,
+			ReadTimeoutSeconds:    10,
+		}
+	}
+
+	var getWrongConfig = func() bluto.Config {
+		return bluto.Config{
+			Address:               "invalidAddress:1234",
 			ConnectTimeoutSeconds: 10,
 			ReadTimeoutSeconds:    10,
 		}
@@ -41,6 +50,10 @@ var _ = Describe("Commander", func() {
 		pool = newPool
 		getConn = func() redis.Conn {
 			return pool.Get()
+		}
+		wrongPool, _ := bluto.GetPool(getWrongConfig())
+		getWrongConn = func() redis.Conn {
+			return wrongPool.Get()
 		}
 	})
 
@@ -613,6 +626,31 @@ var _ = Describe("Commander", func() {
 			Expect(incrResult).To(Equal(0))
 			Expect(getResult).To(Equal(0))
 		})
+
+		It("should return the errors of an invalid redis config", func() {
+			conn := getWrongConn()
+			commander := New(conn)
+			var selectResult string
+			cmdErr := commander.
+				Select(&selectResult, 0).
+				Commit()
+
+			Expect(cmdErr).To(Not(BeNil()))
+			Expect(selectResult).To(Equal(""))
+		})
+
+		It("should return the errors of an invalid result type", func() {
+			conn := getConn()
+			commander := New(conn)
+			var pingResult int
+			cmdErr := commander.
+				Command(&pingResult, "PING").
+				Commit()
+
+			Expect(cmdErr).To(Not(BeNil()))
+			Expect(pingResult).To(Equal(0))
+		})
+
 	})
 
 })
