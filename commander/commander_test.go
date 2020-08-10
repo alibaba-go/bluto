@@ -1,146 +1,227 @@
-package commander_test
+package commander
 
 import (
-	"os"
+	"math/rand"
+	"testing"
 
-	"github.com/gomodule/redigo/redis"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/bxcodec/faker/v3"
+	"github.com/rafaeljusto/redigomock"
 
-	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
-	"git.alibaba.ir/rd/zebel-the-sailor-bluto/pooler"
+	"github.com/stretchr/testify/assert"
 )
 
-var _ = Describe("Commander", func() {
-
-	// --------------------------------- global vars
-
-	var pool *redis.Pool
-	var getConn func() redis.Conn
-
-	// --------------------------------- global funcs
-
-	var getCorrectConfig = func() pooler.Config {
-		address := os.Getenv("REDIS_ADDRESS")
-		return pooler.Config{
-			Address:               address,
-			ConnectTimeoutSeconds: 10,
-			ReadTimeoutSeconds:    10,
-		}
-	}
-
-	// --------------------------------- before and after hooks
-
-	BeforeSuite(func() {
-		newPool, err := pooler.GetPool(getCorrectConfig())
+func TestNew(t *testing.T) {
+	conn := redigomock.NewConn()
+	defer func() {
+		err := conn.Close()
 		if err != nil {
 			panic(err)
 		}
-		pool = newPool
-		getConn = func() redis.Conn {
-			return pool.Get()
-		}
-	})
+	}()
+	cmd := New(conn)
+	assert.NotNil(t, cmd)
+	assert.IsType(t, cmd, &Commander{})
+}
 
-	AfterSuite(func() {
-		pool.Close()
-	})
+func TestGet(t *testing.T) {
+	key := "SomeKey"
+	value := faker.Word()
+	conn := redigomock.NewConn()
+	conn.Command("GET", key).Expect(value)
+	cmd := New(conn)
+	var getResult string
+	cmdErr := cmd.
+		Get(&getResult, key).
+		Commit()
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, getResult, value)
+}
 
-	BeforeEach(func() {
-		conn := getConn()
-		commander := New(conn)
-		cmdResults, err := commander.
-			Command("FLUSHALL").
-			Commit()
-		if err != nil {
-			panic(err)
-		}
-		// convert results
-		var flushResult string
-		_, err = redis.Scan(cmdResults, &flushResult)
-		if err != nil {
-			panic(err)
-		}
-	})
+func TestSelect(t *testing.T) {
+	conn := redigomock.NewConn()
+	conn.Command("SELECT").Expect("OK")
+	cmd := New(conn)
+	var selectResult string
+	index := rand.Intn(10)
+	cmdErr := cmd.
+		Select(&selectResult, index).
+		Commit()
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, selectResult, "OK")
+}
 
-	// --------------------------------- tests
+func TestExpire(t *testing.T) {
+	key := "SomeKey"
+	conn := redigomock.NewConn()
+	conn.Command("EXPIRE", key, 1).Expect(int64(1))
+	cmd := New(conn)
+	var expireResult int
+	cmdErr := cmd.Expire(&expireResult, key, 1).Commit()
 
-	Describe("New method", func() {
-		It("should return a new commander", func() {
-			conn := getConn()
-			commander := New(conn)
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, expireResult, 1)
+}
 
-			Expect(commander).To(Not(BeNil()))
-			Expect(commander).To(BeAssignableToTypeOf(&Commander{}))
-		})
-	})
+func TestDel(t *testing.T) {
+	key := "SomeKey"
+	conn := redigomock.NewConn()
+	conn.Command("DEL", key).Expect(int64(1))
+	cmd := New(conn)
+	var delResult int
+	cmdErr := cmd.Del(&delResult, key).Commit()
 
-	Describe("Command and commit", func() {
-		It("should return the results of a valid chain of commands", func() {
-			conn := getConn()
-			commander := New(conn)
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, delResult, 1)
+}
 
-			key := "somekey"
-			cmdResults, cmdErr := commander.
-				Command("SELECT", 0).
-				Command("SET", key, 9).
-				Command("INCR", key).
-				Command("GET", key).
-				Commit()
+func TestIncr(t *testing.T) {
+	key := "SomeKey"
+	randIntList, _ := faker.RandomInt(10, 100)
+	value := randIntList[0]
+	conn := redigomock.NewConn()
+	conn.Command("INCR", key).Expect(int64(value + 1))
+	cmd := New(conn)
+	var incrResult int
+	cmdErr := cmd.Incr(&incrResult, key).Commit()
 
-			// convert results
-			var selectResult string
-			var setResult string
-			var incrResult int
-			var getResult int
-			_, err := redis.Scan(
-				cmdResults,
-				&selectResult, &setResult,
-				&incrResult, &getResult,
-			)
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, incrResult, value+1)
+}
 
-			Expect(cmdErr).To(BeNil())
-			Expect(selectResult).To(Equal("OK"))
-			Expect(setResult).To(Equal("OK"))
-			Expect(incrResult).To(Equal(10))
-			Expect(getResult).To(Equal(10))
-			Expect(err).To(BeNil())
-		})
+func TestDecr(t *testing.T) {
+	key := "SomeKey"
+	randIntList, _ := faker.RandomInt(10, 100)
+	value := randIntList[0]
+	conn := redigomock.NewConn()
+	conn.Command("DECR", key).Expect(int64(value - 1))
+	cmd := New(conn)
+	var incrResult int
+	cmdErr := cmd.Decr(&incrResult, key).Commit()
 
-		It("should return the errors of an invalid chain of commands", func() {
-			conn := getConn()
-			commander := New(conn)
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, incrResult, value-1)
+}
 
-			key := "somekey"
-			cmdResults, cmdErr := commander.
-				Command("SELECT", 0).
-				Command("SET", key, 9).
-				Command("SOMENONEXISTENTCOMMAND", key, 9).
-				Command("INCR", key).
-				Command("GET", key).
-				Commit()
+func TestPing(t *testing.T) {
+	conn := redigomock.NewConn()
+	conn.Command("PING", "PingMsg").Expect("PingMsg")
+	cmd := New(conn)
+	var pingResult string
+	cmdErr := cmd.Ping(&pingResult, "PingMsg").Commit()
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, pingResult, "PingMsg")
+}
 
-			// convert results
-			var selectResult string
-			var setResult string
-			var nonExistentResult interface{}
-			var incrResult int
-			var getResult int
-			_, err := redis.Scan(
-				cmdResults,
-				&selectResult, &setResult,
-				&nonExistentResult,
-				&incrResult, &getResult,
-			)
+func TestKeys(t *testing.T) {
+	key1 := "SomeKey1"
+	key2 := "SomeKey2"
+	conn := redigomock.NewConn()
+	conn.Command("KEYS", "*Key*").ExpectStringSlice(key1, key2)
+	cmd := New(conn)
+	var keysResult []string
+	cmdErr := cmd.Keys(&keysResult, "*Key*").Commit()
 
-			Expect(cmdErr).To(BeNil())
-			Expect(selectResult).To(Equal("OK"))
-			Expect(setResult).To(Equal("OK"))
-			Expect(nonExistentResult).To(BeNil())
-			Expect(incrResult).To(Equal(0))
-			Expect(getResult).To(Equal(0))
-			Expect(err).To(Not(BeNil()))
-		})
-	})
+	assert.Nil(t, cmdErr)
+	assert.Contains(t, keysResult, key1, key2)
+}
 
-})
+func TestFlushAll(t *testing.T) {
+	conn := redigomock.NewConn()
+	conn.Command("FLUSHALL", "ASYNC").Expect("OK")
+	cmd := New(conn)
+	var flushResult string
+	cmdErr := cmd.FlushAll(&flushResult, true).Commit()
+
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, flushResult, "OK")
+}
+
+func TestSet(t *testing.T) {
+	key := "SomeKey"
+	value := faker.Word()
+	conn := redigomock.NewConn()
+	conn.Command("SET", key, value).Expect("OK")
+	cmd := New(conn)
+	var setResult string
+	cmdErr := cmd.
+		Set(&setResult, key, value, SetOption{}).
+		Commit()
+
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, setResult, "OK")
+}
+
+func TestSetWithEX(t *testing.T) {
+	key := "SomeKey"
+	value := faker.Word()
+	conn := redigomock.NewConn()
+	conn.Command("SET", key, value, "EX", 1).Expect("OK")
+	cmd := New(conn)
+	var setResult string
+	cmdErr := cmd.
+		Set(&setResult, key, value, SetOption{EX: 1}).
+		Commit()
+
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, setResult, "OK")
+}
+
+func TestSetWithPX(t *testing.T) {
+	key := "SomeKey"
+	value := faker.Word()
+	conn := redigomock.NewConn()
+	conn.Command("SET", key, value, "PX", 1000).Expect("OK")
+	cmd := New(conn)
+	var setResult string
+	cmdErr := cmd.
+		Set(&setResult, key, value, SetOption{PX: 1000}).
+		Commit()
+
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, setResult, "OK")
+}
+
+func TestSetWithNX(t *testing.T) {
+	key := "SomeKey"
+	value := faker.Word()
+	conn := redigomock.NewConn()
+	conn.Command("SET", key, value, "NX").Expect("OK")
+	cmd := New(conn)
+	var setResult string
+	cmdErr := cmd.
+		Set(&setResult, key, value, SetOption{NX: true}).
+		Commit()
+
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, setResult, "OK")
+}
+
+func TestSetWithXX(t *testing.T) {
+	key := "SomeKey"
+	value := faker.Word()
+	conn := redigomock.NewConn()
+	conn.Command("SET", key, value, "XX").Expect("OK")
+	cmd := New(conn)
+	var setResult string
+	cmdErr := cmd.
+		Set(&setResult, key, value, SetOption{XX: true}).
+		Commit()
+
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, setResult, "OK")
+}
+
+func TestSetWithKEEPTTL(t *testing.T) {
+	key := "SomeKey"
+	value := faker.Word()
+	conn := redigomock.NewConn()
+	conn.Command("SET", key, value, "KEEPTTL").Expect("OK")
+	cmd := New(conn)
+	var setResult string
+	cmdErr := cmd.
+		Set(&setResult, key, value, SetOption{KEEPTTL: true}).
+		Commit()
+
+	assert.Nil(t, cmdErr)
+	assert.Equal(t, setResult, "OK")
+}

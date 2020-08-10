@@ -1,11 +1,14 @@
 package commander
 
-import "github.com/gomodule/redigo/redis"
+import (
+	"github.com/gomodule/redigo/redis"
+)
 
 // Commander provides a means to command redigo easily
 type Commander struct {
-	conn redis.Conn
-	err  error
+	conn           redis.Conn
+	pendingResults []interface{}
+	err            error
 }
 
 // New returns a new commander
@@ -15,30 +18,132 @@ func New(conn redis.Conn) *Commander {
 	}
 }
 
+// SetOption define option args for redis Set command
+type SetOption struct {
+	EX      int  // EX seconds -- Set the specified expire time, in seconds.
+	PX      int  // PX milliseconds -- Set the specified expire time, in milliseconds.
+	NX      bool // NX -- Only set the key if it does not already exist.
+	XX      bool // XX -- Only set the key if it already exist.
+	KEEPTTL bool // KEEPTTL -- Retain the time to live associated with the key.
+}
+
+// XAddOption define option for redis stream XAdd command
+type XAddOption struct {
+	MaxLen      int
+	Approximate bool
+}
+
 // Command commands the redis connection
-func (c *Commander) Command(name string, args ...interface{}) *Commander {
+func (c *Commander) Command(result interface{}, name string, args ...interface{}) *Commander {
 	// if there has been an error don't do anything
 	if c.err != nil {
 		return c
 	}
-
-	// send the command
+	// add query result to pending result list
+	c.pendingResults = append(c.pendingResults, result)
+	// send the command to buffer
 	c.err = c.conn.Send(name, args...)
 	return c
 }
 
 // Commit returns the results of all the commands
-func (c *Commander) Commit() ([]interface{}, error) {
+func (c *Commander) Commit() error {
+	defer c.conn.Close()
 	// if there has been an error don't do anything
 	if c.err != nil {
-		return nil, c.err
+		return c.err
 	}
-
 	// execute the commands
 	results, err := redis.Values(c.conn.Do(""))
-	defer c.conn.Close()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return results, nil
+	// evaluate all pending results
+	_, err = redis.Scan(results, c.pendingResults...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Select the Redis logical database having the specified zero-based numeric index.
+func (c *Commander) Select(result *string, index int) *Commander {
+	return c.Command(result, "SELECT", index)
+}
+
+// Get the value of key. If the key does not exist the special value nil is returned.
+func (c *Commander) Get(result interface{}, key string) *Commander {
+	return c.Command(result, "GET", key)
+}
+
+// Expire set a timeout on key. After the timeout has expired, the key will automatically be deleted.
+func (c *Commander) Expire(result *int, key string, seconds int) *Commander {
+	return c.Command(result, "EXPIRE", key, seconds)
+}
+
+// Del removes the specified keys. A key is ignored if it does not exist.
+func (c *Commander) Del(result *int, keys ...string) *Commander {
+	iKeys := make([]interface{}, len(keys))
+	for i := range keys {
+		iKeys[i] = keys[i]
+	}
+	return c.Command(result, "DEL", iKeys...)
+}
+
+// Decr decrements the number stored at key by one. If the key does not exist, it is set to 0.
+func (c *Commander) Decr(result *int, key string) *Commander {
+	return c.Command(result, "DECR", key)
+}
+
+// Incr Increments the number stored at key by one. If the key does not exist, it is set to 0.
+func (c *Commander) Incr(result *int, key string) *Commander {
+	return c.Command(result, "INCR", key)
+}
+
+// FlushAll delete all the keys of all the existing databases, not just the currently selected one.
+func (c *Commander) FlushAll(result *string, async bool) *Commander {
+	var optionCmd []interface{}
+	if async {
+		optionCmd = append(optionCmd, "ASYNC")
+	}
+	return c.Command(result, "FLUSHALL", optionCmd...)
+}
+
+// Keys returns all keys matching pattern.
+func (c *Commander) Keys(result *[]string, pattern string) *Commander {
+	return c.Command(result, "KEYS", pattern)
+}
+
+// Ping returns PONG if no argument is provided, otherwise return a copy of the argument as a bulk.
+func (c *Commander) Ping(result *string, message string) *Commander {
+	var optionCmd []interface{}
+	if message != "" {
+		optionCmd = append(optionCmd, message)
+	}
+	return c.Command(result, "PING", optionCmd...)
+}
+
+// Set key to hold the string value. If key already holds a value, it is overwritten.
+func (c *Commander) Set(result *string, key string, value interface{}, options SetOption) *Commander {
+	command := redis.Args{}
+	command = command.Add(key)
+	command = command.Add(value)
+	if options.EX > 0 {
+		command = command.Add("EX")
+		command = command.Add(options.EX)
+	}
+	if options.PX > 0 {
+		command = command.Add("PX")
+		command = command.Add(options.PX)
+	}
+	if options.NX {
+		command = command.Add("NX")
+	}
+	if options.XX {
+		command = command.Add("XX")
+	}
+	if options.KEEPTTL {
+		command = command.Add("KEEPTTL")
+	}
+	return c.Command(result, "SET", command...)
 }

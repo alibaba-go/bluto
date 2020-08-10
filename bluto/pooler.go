@@ -1,4 +1,4 @@
-package pooler
+package bluto
 
 import (
 	"errors"
@@ -6,24 +6,6 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 )
-
-// Config is used to get initialization configs for Pool
-type Config struct {
-	// ---------------------------------------- dial options
-	Network               string
-	Address               string
-	Password              string
-	ConnectTimeoutSeconds int
-	ReadTimeoutSeconds    int
-	WriteTimeoutSeconds   int
-	KeepAliveSeconds      int
-
-	// ---------------------------------------- pool options
-	MaxIdle                int
-	MaxActive              int
-	IdleTimeoutSeconds     int
-	MaxConnLifetimeSeconds int
-}
 
 // GetPool returns a redis connection pool
 // which the users can use to borrows a connection from the pool
@@ -98,7 +80,7 @@ func GetPool(config Config) (*redis.Pool, error) {
 			}
 			// the connection has been used in more than keep alive: it may be alive
 			// check if it's alive
-			_, err := c.Do("PING")
+			_, err := c.Do("Ping")
 			return err
 		},
 		// Maximum number of idle connections in the pool.

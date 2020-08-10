@@ -1,4 +1,4 @@
-package pooler_test
+package bluto_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestPooler(t *testing.T) {
+func TestBluto(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Pooler Suite")
+	RunSpecs(t, "Bluto Suite")
 }
