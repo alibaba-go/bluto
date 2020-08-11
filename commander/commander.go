@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"time"
+
 	"github.com/gomodule/redigo/redis"
 )
 
@@ -24,13 +26,48 @@ type SetOption struct {
 	PX      int  // PX milliseconds -- Set the specified expire time, in milliseconds.
 	NX      bool // NX -- Only set the key if it does not already exist.
 	XX      bool // XX -- Only set the key if it already exist.
-	KEEPTTL bool // KEEPTTL -- Retain the time to live associated with the key.
+	KeepTTL bool // KeepTTL -- Retain the time to live associated with the key.
 }
 
 // XAddOption define option for redis stream XAdd command
 type XAddOption struct {
 	MaxLen      int
 	Approximate bool
+}
+
+// XReadOption define option for redis stream XRead command
+type XReadOption struct {
+	Count int
+	Block time.Duration
+}
+
+//XGroupCreateOption define option for redis stream XGroup Create command
+type XGroupCreateOption struct {
+	MKStream bool
+}
+
+// XReadGroupOption define option for redis stream XReadGroup command
+type XReadGroupOption struct {
+	Count int
+	Block time.Duration
+	NoAck bool
+}
+
+// XClaimOption define option for redis stream XClaim command
+type XClaimOption struct {
+	Idle       time.Duration
+	Time       time.Time
+	RetryCount int
+	Force      bool
+	Justid     bool
+}
+
+// XPendingOption define option for redis stream XPending command
+type XPendingOption struct {
+	StartID  string
+	EndID    string
+	Count    int
+	Consumer string
 }
 
 // Command commands the redis connection
@@ -142,8 +179,189 @@ func (c *Commander) Set(result *string, key string, value interface{}, options S
 	if options.XX {
 		command = command.Add("XX")
 	}
-	if options.KEEPTTL {
+	if options.KeepTTL {
 		command = command.Add("KEEPTTL")
 	}
 	return c.Command(result, "SET", command...)
+}
+
+// XAdd appends the specified stream entry to the stream at the specified key.
+func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options XAddOption) *Commander {
+	command := redis.Args{}.Add(streamName)
+	if options.MaxLen > 0 {
+		command = command.Add("MAXLEN")
+		if options.Approximate {
+			command = command.Add("~")
+		}
+		command = command.Add(options.MaxLen)
+	}
+	command = command.Add(streamID).AddFlat(fields)
+	return c.Command(
+		result,
+		"XADD",
+		command...,
+	)
+}
+
+// XGroupCreate is used in order to manage the consumer groups associated with a stream data structure.
+func (c *Commander) XGroupCreate(result *string, streamName, groupName, streamID string, options XGroupCreateOption) *Commander {
+	cmd := redis.Args{}.Add("CREATE").Add(streamName).Add(groupName).Add(streamID)
+	if options.MKStream {
+		cmd = cmd.Add("MKSTREAM")
+	}
+	return c.Command(
+		result,
+		"XGROUP",
+		cmd...,
+	)
+}
+
+// XGroupDestroy is used in order to manage the consumer groups associated with a stream data structure.
+func (c *Commander) XGroupDestroy(result *int, streamName, groupName string) *Commander {
+	cmd := redis.Args{}.Add("DESTROY").Add(streamName).Add(groupName)
+	return c.Command(
+		result,
+		"XGROUP",
+		cmd...,
+	)
+}
+
+// XGroupDelConsumer is used in order to manage the consumer groups associated with a stream data structure.
+func (c *Commander) XGroupDelConsumer(result *int, streamName, groupName, consumerName string) *Commander {
+	cmd := redis.Args{}.Add("DELCONSUMER").Add(streamName).Add(groupName).Add(consumerName)
+	return c.Command(
+		result,
+		"XGROUP",
+		cmd...,
+	)
+}
+
+// XRead read data from one or multiple streams, only returning entries with an ID greater than the last received ID reported by the caller.
+func (c *Commander) XRead(result interface{}, streamList, idList []string, options XReadOption) *Commander {
+	cmd := redis.Args{}
+	if options.Count > 0 {
+		cmd = cmd.Add("COUNT")
+		cmd = cmd.Add(options.Count)
+	}
+	if options.Block > 0 {
+		cmd = cmd.Add("BLOCK")
+		cmd = cmd.Add(options.Block.Milliseconds())
+	}
+	cmd = cmd.Add("STREAMS")
+	for _, stream := range streamList {
+		cmd = cmd.Add(stream)
+	}
+	for _, id := range idList {
+		cmd = cmd.Add(id)
+	}
+	return c.Command(
+		result,
+		"XREAD",
+		cmd...,
+	)
+}
+
+// XReadGroup s a special version of the XREAD command with support for consumer groups.
+func (c *Commander) XReadGroup(result interface{}, groupName, consumerName string, streamList, idList []string, options XReadGroupOption) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add("GROUP")
+	cmd = cmd.Add(groupName)
+	cmd = cmd.Add(consumerName)
+	if options.Count > 0 {
+		cmd = cmd.Add("COUNT")
+		cmd = cmd.Add(options.Count)
+	}
+	if options.Block > 0 {
+		cmd = cmd.Add("BLOCK")
+		cmd = cmd.Add(options.Block.Milliseconds())
+	}
+	if options.NoAck {
+		cmd = cmd.Add("NOACK")
+	}
+	cmd = cmd.Add("STREAMS")
+	for _, stream := range streamList {
+		cmd = cmd.Add(stream)
+	}
+	for _, id := range idList {
+		cmd = cmd.Add(id)
+	}
+	return c.Command(
+		result,
+		"XREADGROUP",
+		cmd...,
+	)
+}
+
+// XAck  removes one or multiple messages from the pending entries list (PEL) of a stream consumer group.
+func (c *Commander) XAck(result interface{}, streamName, groupName string, idList []string) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add(streamName)
+	cmd = cmd.Add(groupName)
+	for _, id := range idList {
+		cmd = cmd.Add(id)
+	}
+	return c.Command(
+		result,
+		"XACK",
+		cmd...,
+	)
+}
+
+// XPending fetching data from a stream via a consumer group, and not acknowledging such data, has the effect of creating pending entries.
+func (c *Commander) XPending(result interface{}, streamName, groupName string, options XPendingOption) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add(streamName)
+	cmd = cmd.Add(groupName)
+	if options.StartID != "" {
+		cmd = cmd.Add(options.StartID)
+	}
+	if options.EndID != "" {
+		cmd = cmd.Add(options.EndID)
+	}
+	if options.Count != 0 {
+		cmd = cmd.Add(options.Count)
+	}
+	if options.Consumer != "" {
+		cmd = cmd.Add(options.Consumer)
+	}
+	return c.Command(
+		result,
+		"XPENDING",
+		cmd...,
+	)
+}
+
+// XClaim this command changes the ownership of a pending message, so that the new owner is the consumer specified as the command argument.
+func (c *Commander) XClaim(result interface{}, streamName, groupName, consumerName string, minIdleTime time.Duration, idList []string, options XClaimOption) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add(streamName)
+	cmd = cmd.Add(groupName)
+	cmd = cmd.Add(consumerName)
+	cmd = cmd.Add(minIdleTime.Milliseconds())
+	for _, id := range idList {
+		cmd = cmd.Add(id)
+	}
+	if options.Idle != 0 {
+		cmd = cmd.Add("IDLE")
+		cmd = cmd.Add(options.Idle.Milliseconds())
+	}
+	if options.Time.Unix() > 0 {
+		cmd = cmd.Add("TIME")
+		cmd = cmd.Add(options.Time.Unix())
+	}
+	if options.RetryCount != 0 {
+		cmd = cmd.Add("RETRYCOUNT")
+		cmd = cmd.Add(options.RetryCount)
+	}
+	if options.Force {
+		cmd = cmd.Add("force")
+	}
+	if options.Justid {
+		cmd = cmd.Add("justid")
+	}
+	return c.Command(
+		result,
+		"XCLAIM",
+		cmd...,
+	)
 }
