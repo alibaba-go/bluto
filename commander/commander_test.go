@@ -30,10 +30,10 @@ func TestGet(t *testing.T) {
 	conn.Command("GET", key).Expect(value)
 	cmd := New(conn)
 	var getResult string
-	cmdErr := cmd.
+	errCmd := cmd.
 		Get(&getResult, key).
 		Commit()
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, getResult, value)
 }
 
@@ -43,10 +43,10 @@ func TestSelect(t *testing.T) {
 	cmd := New(conn)
 	var selectResult string
 	index := rand.Intn(10)
-	cmdErr := cmd.
+	errCmd := cmd.
 		Select(&selectResult, index).
 		Commit()
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, selectResult, "OK")
 }
 
@@ -56,9 +56,9 @@ func TestExpire(t *testing.T) {
 	conn.Command("EXPIRE", key, 1).Expect(int64(1))
 	cmd := New(conn)
 	var expireResult int
-	cmdErr := cmd.Expire(&expireResult, key, 1).Commit()
+	errCmd := cmd.Expire(&expireResult, key, 1).Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, expireResult, 1)
 }
 
@@ -68,9 +68,9 @@ func TestDel(t *testing.T) {
 	conn.Command("DEL", key).Expect(int64(1))
 	cmd := New(conn)
 	var delResult int
-	cmdErr := cmd.Del(&delResult, key).Commit()
+	errCmd := cmd.Del(&delResult, key).Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, delResult, 1)
 }
 
@@ -82,9 +82,9 @@ func TestIncr(t *testing.T) {
 	conn.Command("INCR", key).Expect(int64(value + 1))
 	cmd := New(conn)
 	var incrResult int
-	cmdErr := cmd.Incr(&incrResult, key).Commit()
+	errCmd := cmd.Incr(&incrResult, key).Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, incrResult, value+1)
 }
 
@@ -96,9 +96,9 @@ func TestDecr(t *testing.T) {
 	conn.Command("DECR", key).Expect(int64(value - 1))
 	cmd := New(conn)
 	var incrResult int
-	cmdErr := cmd.Decr(&incrResult, key).Commit()
+	errCmd := cmd.Decr(&incrResult, key).Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, incrResult, value-1)
 }
 
@@ -107,8 +107,8 @@ func TestPing(t *testing.T) {
 	conn.Command("PING", "PingMsg").Expect("PingMsg")
 	cmd := New(conn)
 	var pingResult string
-	cmdErr := cmd.Ping(&pingResult, "PingMsg").Commit()
-	assert.Nil(t, cmdErr)
+	errCmd := cmd.Ping(&pingResult, "PingMsg").Commit()
+	assert.Nil(t, errCmd)
 	assert.Equal(t, pingResult, "PingMsg")
 }
 
@@ -119,9 +119,9 @@ func TestKeys(t *testing.T) {
 	conn.Command("KEYS", "*Key*").ExpectStringSlice(key1, key2)
 	cmd := New(conn)
 	var keysResult []string
-	cmdErr := cmd.Keys(&keysResult, "*Key*").Commit()
+	errCmd := cmd.Keys(&keysResult, "*Key*").Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Contains(t, keysResult, key1, key2)
 }
 
@@ -130,9 +130,9 @@ func TestFlushAll(t *testing.T) {
 	conn.Command("FLUSHALL", "ASYNC").Expect("OK")
 	cmd := New(conn)
 	var flushResult string
-	cmdErr := cmd.FlushAll(&flushResult, true).Commit()
+	errCmd := cmd.FlushAll(&flushResult, true).Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, flushResult, "OK")
 }
 
@@ -143,11 +143,11 @@ func TestSet(t *testing.T) {
 	conn.Command("SET", key, value).Expect("OK")
 	cmd := New(conn)
 	var setResult string
-	cmdErr := cmd.
+	errCmd := cmd.
 		Set(&setResult, key, value, SetOption{}).
 		Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, setResult, "OK")
 }
 
@@ -158,11 +158,11 @@ func TestSetWithEX(t *testing.T) {
 	conn.Command("SET", key, value, "EX", 1).Expect("OK")
 	cmd := New(conn)
 	var setResult string
-	cmdErr := cmd.
+	errCmd := cmd.
 		Set(&setResult, key, value, SetOption{EX: 1}).
 		Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, setResult, "OK")
 }
 
@@ -173,11 +173,11 @@ func TestSetWithPX(t *testing.T) {
 	conn.Command("SET", key, value, "PX", 1000).Expect("OK")
 	cmd := New(conn)
 	var setResult string
-	cmdErr := cmd.
+	errCmd := cmd.
 		Set(&setResult, key, value, SetOption{PX: 1000}).
 		Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, setResult, "OK")
 }
 
@@ -188,11 +188,11 @@ func TestSetWithNX(t *testing.T) {
 	conn.Command("SET", key, value, "NX").Expect("OK")
 	cmd := New(conn)
 	var setResult string
-	cmdErr := cmd.
+	errCmd := cmd.
 		Set(&setResult, key, value, SetOption{NX: true}).
 		Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, setResult, "OK")
 }
 
@@ -203,11 +203,11 @@ func TestSetWithXX(t *testing.T) {
 	conn.Command("SET", key, value, "XX").Expect("OK")
 	cmd := New(conn)
 	var setResult string
-	cmdErr := cmd.
+	errCmd := cmd.
 		Set(&setResult, key, value, SetOption{XX: true}).
 		Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, setResult, "OK")
 }
 
@@ -218,10 +218,25 @@ func TestSetWithKEEPTTL(t *testing.T) {
 	conn.Command("SET", key, value, "KEEPTTL").Expect("OK")
 	cmd := New(conn)
 	var setResult string
-	cmdErr := cmd.
-		Set(&setResult, key, value, SetOption{KEEPTTL: true}).
+	errCmd := cmd.
+		Set(&setResult, key, value, SetOption{KeepTTL: true}).
 		Commit()
 
-	assert.Nil(t, cmdErr)
+	assert.Nil(t, errCmd)
 	assert.Equal(t, setResult, "OK")
+}
+
+func TestXadd(t *testing.T) {
+	key := "SomeKey"
+	value := faker.Word()
+	streamNmae := "testStream"
+	conn := redigomock.NewConn()
+	conn.Command("XADD", streamNmae, "*", key, value).Expect("OK")
+	cmd := New(conn)
+	var xaddResult string
+	errCmd := cmd.
+		XAdd(&xaddResult, streamNmae, "*", map[string]string{key: value}, XAddOption{}).
+		Commit()
+	assert.Nil(t, errCmd)
+	assert.Equal(t, xaddResult, "OK")
 }

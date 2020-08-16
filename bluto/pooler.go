@@ -99,6 +99,5 @@ func GetPool(config Config) (*redis.Pool, error) {
 		// the pool does not close connections based on age.
 		MaxConnLifetime: maxConnLifetime,
 	}
-
 	return pool, nil
 }

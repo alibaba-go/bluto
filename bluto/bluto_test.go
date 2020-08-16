@@ -17,9 +17,7 @@ var _ = Describe("Bluto", func() {
 	var getCorrectConfig = func() bluto.Config {
 		address := os.Getenv("REDIS_ADDRESS")
 		return bluto.Config{
-			Address:               address,
-			ConnectTimeoutSeconds: 10,
-			ReadTimeoutSeconds:    10,
+			Address: address,
 		}
 	}
 
