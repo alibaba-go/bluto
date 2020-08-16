@@ -1,6 +1,1 @@
 .idea
-.env
-
-#golang 
-*testCoverage
-go.sum
