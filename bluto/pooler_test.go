@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"git.alibaba.ir/rd/zebel-the-sailor-bluto/bluto"
+	"github.com/alibaba-go/bluto/bluto"
 )
 
 var _ = Describe("Pooler", func() {

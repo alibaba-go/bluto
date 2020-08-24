@@ -1,7 +1,7 @@
 package bluto
 
 import (
-	"git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
+	"github.com/alibaba-go/bluto/commander"
 	"github.com/gomodule/redigo/redis"
 )
 

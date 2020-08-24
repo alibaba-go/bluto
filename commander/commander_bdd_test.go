@@ -4,13 +4,13 @@ import (
 	"os"
 	"time"
 
-	"git.alibaba.ir/rd/zebel-the-sailor-bluto/bluto"
+	"github.com/alibaba-go/bluto/bluto"
 	"github.com/bxcodec/faker/v3"
 	"github.com/gomodule/redigo/redis"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "git.alibaba.ir/rd/zebel-the-sailor-bluto/commander"
+	. "github.com/alibaba-go/bluto/commander"
 )
 
 // Fields are the properties of each consumed message
