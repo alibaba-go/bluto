@@ -1,4 +1,4 @@
-module git.alibaba.ir/rd/zebel-the-sailor-bluto
+module github.com/alibaba-go/bluto
 
 go 1.14
 
