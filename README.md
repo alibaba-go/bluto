@@ -1,4 +1,4 @@
-# Zebel the sailor Bluto
+# Bluto
 Bluto is a golang implementation of redis client based on Gary Burd's
 [Redigo](https://github.com/garyburd/redigo).The client manages a connection pool 
 for each node, uses goroutine to execute as concurrently as possible, which leads 
