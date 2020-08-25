@@ -81,11 +81,11 @@ func TestIncr(t *testing.T) {
 	conn := redigomock.NewConn()
 	conn.Command("INCR", key).Expect(int64(value + 1))
 	cmd := New(conn)
-	var incrResult int
+	var incrResult int64
 	errCmd := cmd.Incr(&incrResult, key).Commit()
 
 	assert.Nil(t, errCmd)
-	assert.Equal(t, incrResult, value+1)
+	assert.Equal(t, incrResult, int64(value+1))
 }
 
 func TestDecr(t *testing.T) {
@@ -95,11 +95,11 @@ func TestDecr(t *testing.T) {
 	conn := redigomock.NewConn()
 	conn.Command("DECR", key).Expect(int64(value - 1))
 	cmd := New(conn)
-	var incrResult int
+	var incrResult int64
 	errCmd := cmd.Decr(&incrResult, key).Commit()
 
 	assert.Nil(t, errCmd)
-	assert.Equal(t, incrResult, value-1)
+	assert.Equal(t, incrResult, int64(value-1))
 }
 
 func TestPing(t *testing.T) {

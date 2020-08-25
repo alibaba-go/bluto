@@ -557,7 +557,7 @@ var _ = Describe("Commander", func() {
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
-			var incrResult int
+			var incrResult int64
 			errCmd := commander.Incr(&incrResult, key).Commit()
 			conn = getConn()
 			var getResult int
@@ -575,7 +575,7 @@ var _ = Describe("Commander", func() {
 			Expect(errCmd).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
 			Expect(getResult).To(Equal(value + 1))
-			Expect(incrResult).To(Equal(value + 1))
+			Expect(incrResult).To(Equal(int64(value + 1)))
 		})
 	})
 
@@ -591,7 +591,7 @@ var _ = Describe("Commander", func() {
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
-			var decrResult int
+			var decrResult int64
 			errCmd := commander.Decr(&decrResult, key).Commit()
 			conn = getConn()
 			var getResult int
@@ -609,7 +609,7 @@ var _ = Describe("Commander", func() {
 			Expect(errCmd).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
 			Expect(getResult).To(Equal(value - 1))
-			Expect(decrResult).To(Equal(value - 1))
+			Expect(decrResult).To(Equal(int64(value - 1)))
 		})
 	})
 
@@ -1456,9 +1456,9 @@ var _ = Describe("Commander", func() {
 			pingMsg := "PingMessage"
 			var selectResult string
 			var setResult string
-			var incrResult int
+			var incrResult int64
 			var getResult int
-			var decrResult int
+			var decrResult int64
 			var pingResult string
 
 			errCmd := commander.
@@ -1473,9 +1473,9 @@ var _ = Describe("Commander", func() {
 			Expect(errCmd).To(BeNil())
 			Expect(selectResult).To(Equal("OK"))
 			Expect(setResult).To(Equal("OK"))
-			Expect(incrResult).To(Equal(10))
+			Expect(incrResult).To(Equal(int64(10)))
 			Expect(getResult).To(Equal(10))
-			Expect(decrResult).To(Equal(9))
+			Expect(decrResult).To(Equal(int64(9)))
 			Expect(pingResult).To(Equal(pingMsg))
 		})
 
@@ -1486,7 +1486,7 @@ var _ = Describe("Commander", func() {
 			var selectResult string
 			var setResult string
 			var nonExistentResult interface{}
-			var incrResult int
+			var incrResult int64
 			var getResult int
 
 			errCmd := commander.
@@ -1501,7 +1501,7 @@ var _ = Describe("Commander", func() {
 			Expect(selectResult).To(Equal("OK"))
 			Expect(setResult).To(Equal("OK"))
 			Expect(nonExistentResult).To(BeNil())
-			Expect(incrResult).To(Equal(0))
+			Expect(incrResult).To(Equal(int64(0)))
 			Expect(getResult).To(Equal(0))
 		})
 
