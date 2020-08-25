@@ -128,12 +128,12 @@ func (c *Commander) Del(result *int, keys ...string) *Commander {
 }
 
 // Decr decrements the number stored at key by one. If the key does not exist, it is set to 0.
-func (c *Commander) Decr(result *int, key string) *Commander {
+func (c *Commander) Decr(result *int64, key string) *Commander {
 	return c.Command(result, "DECR", key)
 }
 
 // Incr Increments the number stored at key by one. If the key does not exist, it is set to 0.
-func (c *Commander) Incr(result *int, key string) *Commander {
+func (c *Commander) Incr(result *int64, key string) *Commander {
 	return c.Command(result, "INCR", key)
 }
 
