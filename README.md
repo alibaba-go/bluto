@@ -47,15 +47,15 @@ bluto.Borrow.Incr(&incrResult, "key").Commit()
 ```
 You can also chain redis commands like this:
 ```go
-bluto.Borrow..Select(&selectResult, 2).Set(&setResult, "key", "value",SetOption{KEEPTTL: true}).Incr(&incrResult, "key").Commit()
-bluto.Borrow..Select(&selectResult, 2).Get(&getResult, "key").Decr(&decrResult, "key")..Del(&delResult, "key").Commit()
+bluto.Borrow.Select(&selectResult, 2).Set(&setResult, "key", "value",SetOption{KEEPTTL: true}).Incr(&incrResult, "key").Commit()
+bluto.Borrow.Select(&selectResult, 2).Get(&getResult, "key").Decr(&decrResult, "key")..Del(&delResult, "key").Commit()
 ```
 Also, you can use Values and Scan to convert replies to multiple values with different types.
 ```
 
 ## Contact
 Bug reports and feature requests are welcome.
-If you have any question, please email me .
+If you have any question, please email us at rd@alibaba.ir.
 
 ## License
-Bluto is available under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html).
+Released under MIT License 
