@@ -50,7 +50,6 @@ bluto.Borrow.Select(&selectResult, 2).Set(&setResult, "key", "value",SetOption{K
 bluto.Borrow.Select(&selectResult, 2).Get(&getResult, "key").Decr(&decrResult, "key")..Del(&delResult, "key").Commit()
 ```
 Also, you can use Values and Scan to convert replies to multiple values with different types.
-```
 
 ## Contact
 Bug reports and feature requests are welcome.
