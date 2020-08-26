@@ -1,6 +1,5 @@
 # Bluto
-Bluto is a golang implementation of redis client based on Gary Burd's
-[Redigo](https://github.com/garyburd/redigo).The client manages a connection pool 
+Bluto is a golang implementation of redis client based on [Redigo](https://github.com/gomodule/redigo).The client manages a connection pool 
 for each node, uses goroutine to execute as concurrently as possible, which leads 
 to its high efficiency and low lantency.
 
@@ -12,9 +11,9 @@ to its high efficiency and low lantency.
 [API Reference]()
 
 ## Installation
-Install redis-go-cluster with go tool:
+Install Bluto with go tool:
 ```
-    go get 
+    go get https://github.com/alibaba-go/bluto
 ```
     
 ## Usage
