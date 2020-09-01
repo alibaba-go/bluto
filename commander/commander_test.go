@@ -130,7 +130,7 @@ func TestFlushAll(t *testing.T) {
 	conn.Command("FLUSHALL", "ASYNC").Expect("OK")
 	cmd := New(conn)
 	var flushResult string
-	errCmd := cmd.FlushAll(&flushResult, true).Commit()
+	errCmd := cmd.FlushAll(&flushResult, &FlushAllOption{Async: true}).Commit()
 
 	assert.Nil(t, errCmd)
 	assert.Equal(t, flushResult, "OK")
@@ -144,7 +144,7 @@ func TestSet(t *testing.T) {
 	cmd := New(conn)
 	var setResult string
 	errCmd := cmd.
-		Set(&setResult, key, value, SetOption{}).
+		Set(&setResult, key, value, nil).
 		Commit()
 
 	assert.Nil(t, errCmd)
@@ -159,7 +159,7 @@ func TestSetWithEX(t *testing.T) {
 	cmd := New(conn)
 	var setResult string
 	errCmd := cmd.
-		Set(&setResult, key, value, SetOption{EX: 1}).
+		Set(&setResult, key, value, &SetOption{EX: 1}).
 		Commit()
 
 	assert.Nil(t, errCmd)
@@ -174,7 +174,7 @@ func TestSetWithPX(t *testing.T) {
 	cmd := New(conn)
 	var setResult string
 	errCmd := cmd.
-		Set(&setResult, key, value, SetOption{PX: 1000}).
+		Set(&setResult, key, value, &SetOption{PX: 1000}).
 		Commit()
 
 	assert.Nil(t, errCmd)
@@ -189,7 +189,7 @@ func TestSetWithNX(t *testing.T) {
 	cmd := New(conn)
 	var setResult string
 	errCmd := cmd.
-		Set(&setResult, key, value, SetOption{NX: true}).
+		Set(&setResult, key, value, &SetOption{NX: true}).
 		Commit()
 
 	assert.Nil(t, errCmd)
@@ -204,7 +204,7 @@ func TestSetWithXX(t *testing.T) {
 	cmd := New(conn)
 	var setResult string
 	errCmd := cmd.
-		Set(&setResult, key, value, SetOption{XX: true}).
+		Set(&setResult, key, value, &SetOption{XX: true}).
 		Commit()
 
 	assert.Nil(t, errCmd)
@@ -219,7 +219,7 @@ func TestSetWithKEEPTTL(t *testing.T) {
 	cmd := New(conn)
 	var setResult string
 	errCmd := cmd.
-		Set(&setResult, key, value, SetOption{KeepTTL: true}).
+		Set(&setResult, key, value, &SetOption{KeepTTL: true}).
 		Commit()
 
 	assert.Nil(t, errCmd)
@@ -235,7 +235,7 @@ func TestXadd(t *testing.T) {
 	cmd := New(conn)
 	var xaddResult string
 	errCmd := cmd.
-		XAdd(&xaddResult, streamNmae, "*", map[string]string{key: value}, XAddOption{}).
+		XAdd(&xaddResult, streamNmae, "*", map[string]string{key: value}, nil).
 		Commit()
 	assert.Nil(t, errCmd)
 	assert.Equal(t, xaddResult, "OK")

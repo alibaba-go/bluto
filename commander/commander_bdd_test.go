@@ -261,7 +261,7 @@ var _ = Describe("Commander", func() {
 		var selectReslt string
 		err := commander.
 			Select(&selectReslt, 0).
-			FlushAll(&flushResult, false).
+			FlushAll(&flushResult, nil).
 			Commit()
 		if err != nil {
 			panic(err)
@@ -306,7 +306,7 @@ var _ = Describe("Commander", func() {
 			commander := New(conn)
 			var setResult string
 			errCmd := commander.
-				Set(&setResult, key, value, SetOption{}).
+				Set(&setResult, key, value, nil).
 				Commit()
 			conn = getConn()
 			var getResult string
@@ -330,7 +330,7 @@ var _ = Describe("Commander", func() {
 			commander := New(conn)
 			var setResult string
 			errCmd := commander.
-				Set(&setResult, key, value, SetOption{EX: 1}).
+				Set(&setResult, key, value, &SetOption{EX: 1}).
 				Commit()
 			time.Sleep(1100 * time.Millisecond)
 			conn = getConn()
@@ -355,7 +355,7 @@ var _ = Describe("Commander", func() {
 			commander := New(conn)
 			var setResult string
 			errCmd := commander.
-				Set(&setResult, key, value, SetOption{PX: 1000}).
+				Set(&setResult, key, value, &SetOption{PX: 1000}).
 				Commit()
 			time.Sleep(1100 * time.Millisecond)
 			conn = getConn()
@@ -387,7 +387,7 @@ var _ = Describe("Commander", func() {
 			commander := New(conn)
 			var newSetResult string
 			errCmd := commander.
-				Set(&setResult, key, newValue, SetOption{NX: true}).
+				Set(&setResult, key, newValue, &SetOption{NX: true}).
 				Commit()
 			conn = getConn()
 			var getResult string
@@ -415,7 +415,7 @@ var _ = Describe("Commander", func() {
 			commander := New(conn)
 			var setResult string
 			errCmd := commander.
-				Set(&setResult, key, value, SetOption{XX: true}).
+				Set(&setResult, key, value, &SetOption{XX: true}).
 				Commit()
 
 			conn = getConn()
@@ -626,7 +626,7 @@ var _ = Describe("Commander", func() {
 			conn = getConn()
 			commander := New(conn)
 			var flushResult string
-			errCmd := commander.FlushAll(&flushResult, true).Commit()
+			errCmd := commander.FlushAll(&flushResult, nil).Commit()
 			conn = getConn()
 			var getResult string
 			errSendGet := conn.Send("GET", key)
@@ -694,10 +694,10 @@ var _ = Describe("Commander", func() {
 			var xreadResult []Stream
 			conn := getConn()
 			commander := New(conn)
-			errCmd1 := commander.XAdd(&xaddResult, "testStream", "*", &Fields{Key: key}, XAddOption{MaxLen: 2, Approximate: true}).Commit()
+			errCmd1 := commander.XAdd(&xaddResult, "testStream", "*", &Fields{Key: key}, &XAddOption{MaxLen: 2, Approximate: true}).Commit()
 			conn = getConn()
 			commander = New(conn)
-			errCmd2 := commander.XAdd(&xaddResult, "testStream", "*", &Fields{Key: key}, XAddOption{MaxLen: 2, Approximate: true}).Commit()
+			errCmd2 := commander.XAdd(&xaddResult, "testStream", "*", &Fields{Key: key}, &XAddOption{MaxLen: 2, Approximate: true}).Commit()
 			conn = getConn()
 			errSend := conn.Send("XREAD", "STREAMS", "testStream", "0-0")
 			resutl, errResult := redis.Values(conn.Do(""))
@@ -721,10 +721,10 @@ var _ = Describe("Commander", func() {
 			var xreadResult []Stream
 			conn := getConn()
 			commander := New(conn)
-			errCmd1 := commander.XAdd(&xaddResult, "testStream", "*", &Fields{Key: key}, XAddOption{MaxLen: 1, Approximate: false}).Commit()
+			errCmd1 := commander.XAdd(&xaddResult, "testStream", "*", &Fields{Key: key}, &XAddOption{MaxLen: 1, Approximate: false}).Commit()
 			conn = getConn()
 			commander = New(conn)
-			errCmd2 := commander.XAdd(&xaddResult, "testStream", "*", &Fields{Key: key}, XAddOption{MaxLen: 1, Approximate: false}).Commit()
+			errCmd2 := commander.XAdd(&xaddResult, "testStream", "*", &Fields{Key: key}, &XAddOption{MaxLen: 1, Approximate: false}).Commit()
 			conn = getConn()
 			errSend := conn.Send("XREAD", "STREAMS", "testStream", "0-0")
 			resutl, errResult := redis.Values(conn.Do(""))
@@ -761,7 +761,7 @@ var _ = Describe("Commander", func() {
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
-			errCmd := commander.XRead(&xreadResult, []string{"testStream"}, []string{"0-0"}, XReadOption{Count: 1}).Commit()
+			errCmd := commander.XRead(&xreadResult, []string{"testStream"}, []string{"0-0"}, &XReadOption{Count: 1}).Commit()
 
 			Expect(errSend1).To(BeNil())
 			Expect(errScan1).To(BeNil())
@@ -785,7 +785,7 @@ var _ = Describe("Commander", func() {
 			go func() {
 				conn := getConn()
 				commander := New(conn)
-				errCmd = commander.XRead(&xreadResult, []string{"testStream"}, []string{"0-0"}, XReadOption{Block: 4000 * time.Millisecond}).Commit()
+				errCmd = commander.XRead(&xreadResult, []string{"testStream"}, []string{"0-0"}, &XReadOption{Block: 4000 * time.Millisecond}).Commit()
 				waitChan <- true
 			}()
 			conn := getConn()
@@ -832,7 +832,7 @@ var _ = Describe("Commander", func() {
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
-			errCmd := commander.XReadGroup(&xreadGroupResult, groupName, consumerName, []string{"testStream"}, []string{">"}, XReadGroupOption{Count: 1}).Commit()
+			errCmd := commander.XReadGroup(&xreadGroupResult, groupName, consumerName, []string{"testStream"}, []string{">"}, &XReadGroupOption{Count: 1}).Commit()
 
 			Expect(errSend).To(BeNil())
 			Expect(errScan).To(BeNil())
@@ -871,10 +871,10 @@ var _ = Describe("Commander", func() {
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
-			errCmd := commander.XReadGroup(&xreadGroupResult, groupName, consumerName, []string{"testStream"}, []string{">"}, XReadGroupOption{NoAck: true}).Commit()
+			errCmd := commander.XReadGroup(&xreadGroupResult, groupName, consumerName, []string{"testStream"}, []string{">"}, &XReadGroupOption{NoAck: true}).Commit()
 			conn = getConn()
 			commander = New(conn)
-			errCmd2 := commander.XReadGroup(&xreadGroupResult2, groupName, consumerName, []string{"testStream"}, []string{"0-0"}, XReadGroupOption{}).Commit()
+			errCmd2 := commander.XReadGroup(&xreadGroupResult2, groupName, consumerName, []string{"testStream"}, []string{"0-0"}, nil).Commit()
 
 			Expect(errSend).To(BeNil())
 			Expect(errScan).To(BeNil())
@@ -908,7 +908,7 @@ var _ = Describe("Commander", func() {
 			go func() {
 				conn := getConn()
 				commander := New(conn)
-				errCmd = commander.XReadGroup(&xreadGroupResult, groupName, consumerName, []string{"testStream"}, []string{">"}, XReadGroupOption{Block: 4000 * time.Millisecond}).Commit()
+				errCmd = commander.XReadGroup(&xreadGroupResult, groupName, consumerName, []string{"testStream"}, []string{">"}, &XReadGroupOption{Block: 4000 * time.Millisecond}).Commit()
 				waitChan <- true
 			}()
 			conn = getConn()
@@ -937,7 +937,7 @@ var _ = Describe("Commander", func() {
 			conn := getConn()
 			commander := New(conn)
 			var xgroupResult string
-			errCmd := commander.XGroupCreate(&xgroupResult, "testStream", groupName, "0-0", XGroupCreateOption{MKStream: true}).Commit()
+			errCmd := commander.XGroupCreate(&xgroupResult, "testStream", groupName, "0-0", &XGroupCreateOption{MKStream: true}).Commit()
 
 			Expect(errCmd).To(BeNil())
 			Expect(xgroupResult).To(Equal("OK"))
@@ -1087,7 +1087,7 @@ var _ = Describe("Commander", func() {
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
-			errCmd := commander.XPending(&xpendingResult, "testStream", groupName, XPendingOption{}).Commit()
+			errCmd := commander.XPending(&xpendingResult, "testStream", groupName, nil).Commit()
 
 			Expect(errSend).To(BeNil())
 			Expect(errScan).To(BeNil())
@@ -1131,7 +1131,7 @@ var _ = Describe("Commander", func() {
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
-			errCmd := commander.XPending(&xpendingResult, "testStream", groupName, XPendingOption{StartID: "-", EndID: "+", Count: 1, Consumer: consumerName}).Commit()
+			errCmd := commander.XPending(&xpendingResult, "testStream", groupName, &XPendingOption{StartID: "-", EndID: "+", Count: 1, Consumer: consumerName}).Commit()
 
 			Expect(errSend).To(BeNil())
 			Expect(errScan).To(BeNil())
@@ -1193,7 +1193,7 @@ var _ = Describe("Commander", func() {
 			time.Sleep(150 * time.Millisecond)
 			conn = getConn()
 			commander := New(conn)
-			errCmd := commander.XClaim(&xclaimResult, "testStream", groupName, consumerName2, 100*time.Millisecond, []string{xaddResult}, XClaimOption{}).Commit()
+			errCmd := commander.XClaim(&xclaimResult, "testStream", groupName, consumerName2, 100*time.Millisecond, []string{xaddResult}, nil).Commit()
 
 			Expect(errSend).To(BeNil())
 			Expect(errScan).To(BeNil())
@@ -1261,7 +1261,7 @@ var _ = Describe("Commander", func() {
 			time.Sleep(150 * time.Millisecond)
 			conn = getConn()
 			commander := New(conn)
-			errCmd := commander.XClaim(&xclaimResult, "testStream", groupName, consumerName2, 100*time.Millisecond, []string{xaddResult}, XClaimOption{Justid: true}).Commit()
+			errCmd := commander.XClaim(&xclaimResult, "testStream", groupName, consumerName2, 100*time.Millisecond, []string{xaddResult}, &XClaimOption{Justid: true}).Commit()
 
 			Expect(errSend).To(BeNil())
 			Expect(errScan).To(BeNil())
@@ -1321,7 +1321,7 @@ var _ = Describe("Commander", func() {
 			time.Sleep(150 * time.Millisecond)
 			conn = getConn()
 			commander := New(conn)
-			errCmd := commander.XClaim(&xclaimResult, "testStream", groupName, consumerName1, 100*time.Millisecond, []string{xaddResult2}, XClaimOption{Force: true}).Commit()
+			errCmd := commander.XClaim(&xclaimResult, "testStream", groupName, consumerName1, 100*time.Millisecond, []string{xaddResult2}, &XClaimOption{Force: true}).Commit()
 
 			Expect(errSend).To(BeNil())
 			Expect(errScan).To(BeNil())
@@ -1391,7 +1391,7 @@ var _ = Describe("Commander", func() {
 
 			errCmd := commander.
 				Select(&selectResult, 0).
-				Set(&setResult, key, 9, SetOption{}).
+				Set(&setResult, key, 9, nil).
 				Expire(&expireResult1, key, 1).
 				Expire(&expireResult2, "NotExistKey", 1).
 				Get(&getResult1, key).
@@ -1430,12 +1430,12 @@ var _ = Describe("Commander", func() {
 
 			errCmd := commander.
 				Select(&selectResult, 0).
-				Set(&setResult1, key1, 9, SetOption{}).
-				Set(&setResult2, key2, 9, SetOption{}).
+				Set(&setResult1, key1, 9, nil).
+				Set(&setResult2, key2, 9, nil).
 				Keys(&keysResult, "*Key*").
 				Del(&delResult, key1, "NotExistKey").
 				Get(&getResult1, key1).
-				FlushAll(&flushResult, true).
+				FlushAll(&flushResult, &FlushAllOption{Async: true}).
 				Get(&getResult2, key2).
 				Commit()
 
@@ -1463,7 +1463,7 @@ var _ = Describe("Commander", func() {
 
 			errCmd := commander.
 				Select(&selectResult, 0).
-				Set(&setResult, key, 9, SetOption{}).
+				Set(&setResult, key, 9, nil).
 				Incr(&incrResult, key).
 				Get(&getResult, key).
 				Decr(&decrResult, key).
@@ -1491,7 +1491,7 @@ var _ = Describe("Commander", func() {
 
 			errCmd := commander.
 				Select(&selectResult, 0).
-				Set(&setResult, key, 9, SetOption{}).
+				Set(&setResult, key, 9, nil).
 				Command(&nonExistentResult, "SOMENONEXISTENTCOMMAND", key, 9).
 				Incr(&incrResult, key).
 				Get(&getResult, key).
