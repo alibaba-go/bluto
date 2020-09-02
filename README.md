@@ -8,12 +8,12 @@ to its high efficiency and low lantency.
 
 
 ## Documentation
-[API Reference]()
+[API Reference](https://pkg.go.dev/github.com/alibaba-go/bluto)
 
 ## Installation
 Install Bluto with go tool:
 ```
-    go get https://github.com/alibaba-go/bluto
+    go get github.com/alibaba-go/bluto/...
 ```
     
 ## Usage
@@ -40,16 +40,25 @@ Bluto gives you a commander by calling Borrow() which is interface to run redis 
 See full redis commands: 
 
 ```go
-bluto.Borrow.Set(&setResult, "key", "value", SetOption{KEEPTTL: true}).Commit()
-bluto.Borrow.Get(&getResult, "key").Commit()
-bluto.Borrow.Incr(&incrResult, "key").Commit()
+bluto.Borrow().Set(&setResult, "key", "value", SetOption{KEEPTTL: true}).Commit()
+bluto.Borrow().Get(&getResult, "key").Commit()
+bluto.Borrow().Incr(&incrResult, "key").Commit()
 ```
 You can also chain redis commands like this:
 ```go
-bluto.Borrow.Select(&selectResult, 2).Set(&setResult, "key", "value",SetOption{KEEPTTL: true}).Incr(&incrResult, "key").Commit()
-bluto.Borrow.Select(&selectResult, 2).Get(&getResult, "key").Decr(&decrResult, "key")..Del(&delResult, "key").Commit()
+bluto.Borrow().Select(&selectResult, 2).Set(&setResult, "key", "value",SetOption{KEEPTTL: true}).Incr(&incrResult, "key").Commit()
+bluto.Borrow().Select(&selectResult, 2).Get(&getResult, "key").Decr(&decrResult, "key").Del(&delResult, "key").Commit()
 ```
 Also, you can use Values and Scan to convert replies to multiple values with different types.
+
+### Hook
+You can pass each commander a function as a hook which will be excuted after the sucessfull commit.
+It's main use-case is for logging or metric gathering.
+
+Simple logging example: 
+```go
+bluto.Borrow().Ping(&pingResult, "Ping msg").Hook(log.info, "Ping Executed").Commit()
+```
 
 ## Contact
 Bug reports and feature requests are welcome.
