@@ -485,7 +485,7 @@ var _ = Describe("Commander", func() {
 			conn.Close()
 			conn = getConn()
 			commander := New(conn)
-			var expireResult int
+			var expireResult bool
 			errCmd := commander.Expire(&expireResult, key, 1).Commit()
 			time.Sleep(1100 * time.Millisecond)
 			conn = getConn()
@@ -500,7 +500,7 @@ var _ = Describe("Commander", func() {
 			Expect(errResult).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
 			Expect(errCmd).To(BeNil())
-			Expect(expireResult).To(Equal(1))
+			Expect(expireResult).To(Equal(true))
 			Expect(errSend).To(BeNil())
 			Expect(errSendGet).To(BeNil())
 			Expect(errResultGet).To(BeNil())
@@ -1384,8 +1384,8 @@ var _ = Describe("Commander", func() {
 			key := "SomeKey"
 			var selectResult string
 			var setResult string
-			var expireResult1 int
-			var expireResult2 int
+			var expireResult1 bool
+			var expireResult2 bool
 			var getResult1 int
 			var getResult2 int
 
@@ -1398,8 +1398,8 @@ var _ = Describe("Commander", func() {
 				Commit()
 			Expect(errCmd).To(BeNil())
 			Expect(setResult).To(Equal("OK"))
-			Expect(expireResult1).To(Equal(1))
-			Expect(expireResult2).To(Equal(0))
+			Expect(expireResult1).To(Equal(true))
+			Expect(expireResult2).To(Equal(false))
 			Expect(getResult1).To(Equal(9))
 			//wait to expire key
 			time.Sleep(1100 * time.Millisecond)
