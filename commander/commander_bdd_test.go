@@ -1346,6 +1346,35 @@ var _ = Describe("Commander", func() {
 
 	})
 
+	Describe("Hook", func() {
+		It("should run the hook after successfull commit", func() {
+			incrHook := func(inp ...interface{}) {
+				*(inp[0].(*int)) = *(inp[0].(*int)) + 1
+			}
+			hookValue := 0
+			conn := getConn()
+			commander := New(conn)
+			var pingResult string
+			errCmd := commander.Ping(&pingResult, "").Hook(incrHook, &hookValue).Commit()
+
+			Expect(errCmd).To(BeNil())
+			Expect(pingResult).To(Equal("PONG"))
+			Expect(hookValue).To(Equal(1))
+		})
+		It("should not run the hook after failed commit", func() {
+			incrHook := func(inp ...interface{}) {
+				*(inp[0].(*int)) = *(inp[0].(*int)) + 1
+			}
+			hookValue := 0
+			conn := getConn()
+			commander := New(conn)
+			errCmd := commander.Hook(incrHook, &hookValue).Commit()
+
+			Expect(errCmd).To(Not(BeNil()))
+			Expect(hookValue).To(Equal(0))
+		})
+	})
+
 	Describe("Integration test command and commit", func() {
 		It("should return the error of resuing closed connection", func() {
 			pool, errpool := bluto.GetPool(getCorrectConfig())

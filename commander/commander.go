@@ -11,6 +11,8 @@ type Commander struct {
 	conn           redis.Conn
 	pendingResults []interface{}
 	err            error
+	hookList       []func(...interface{})
+	hookArgList    [][]interface{}
 }
 
 // New returns a new commander
@@ -99,6 +101,10 @@ func (c *Commander) Commit() error {
 	_, err = redis.Scan(results, c.pendingResults...)
 	if err != nil {
 		return err
+	}
+	// run all hooks
+	for index, hook := range c.hookList {
+		hook(c.hookArgList[index]...)
 	}
 	return nil
 }
@@ -364,4 +370,15 @@ func (c *Commander) XClaim(result interface{}, streamName, groupName, consumerNa
 		"XCLAIM",
 		cmd...,
 	)
+}
+
+// Hook simply runs given function if Command was commited successfully
+func (c *Commander) Hook(hook func(...interface{}), args ...interface{}) *Commander {
+	c.hookList = append(c.hookList, hook)
+	var arglist []interface{}
+	for _, arg := range args {
+		arglist = append(arglist, arg)
+	}
+	c.hookArgList = append(c.hookArgList, arglist)
+	return c
 }
