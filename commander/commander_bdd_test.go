@@ -1346,6 +1346,40 @@ var _ = Describe("Commander", func() {
 
 	})
 
+	Describe("EXISTS", func() {
+		It("should return the real results of a valid EXISTS", func() {
+			key1 := "SomeKey1"
+			value1 := faker.Word()
+			key2 := "SomeKey2"
+			value2 := faker.Word()
+			conn := getConn()
+			var setResult1 string
+			var setResult2 string
+			var existsResult int
+			errSend := conn.Send("SET", key1, value1)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult1)
+			conn = getConn()
+			errSend2 := conn.Send("SET", key2, value2)
+			results, errResult2 := redis.Values(conn.Do(""))
+			_, errScan2 := redis.Scan(results, &setResult2)
+			conn = getConn()
+			commander := New(conn)
+			errCmd := commander.Exists(&existsResult, "SomeKey1", "SomeKey2", "SomeKey3").Commit()
+
+			Expect(errSend).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(errSend2).To(BeNil())
+			Expect(errScan2).To(BeNil())
+			Expect(errResult2).To(BeNil())
+			Expect(errCmd).To(BeNil())
+			Expect(setResult1).To(Equal("OK"))
+			Expect(setResult2).To(Equal("OK"))
+			Expect(existsResult).To(Equal(2))
+		})
+	})
+
 	Describe("Integration test command and commit", func() {
 		It("should return the error of resuing closed connection", func() {
 			pool, errpool := bluto.GetPool(getCorrectConfig())
