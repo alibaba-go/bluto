@@ -155,7 +155,7 @@ func TestSetWithEX(t *testing.T) {
 	key := "SomeKey"
 	value := faker.Word()
 	conn := redigomock.NewConn()
-	conn.Command("SET", key, value, "EX", 1).Expect("OK")
+	conn.Command("SET", key, value, "EX", uint64(1)).Expect("OK")
 	cmd := New(conn)
 	var setResult string
 	errCmd := cmd.
@@ -170,11 +170,11 @@ func TestSetWithPX(t *testing.T) {
 	key := "SomeKey"
 	value := faker.Word()
 	conn := redigomock.NewConn()
-	conn.Command("SET", key, value, "PX", 1000).Expect("OK")
+	conn.Command("SET", key, value, "PX", uint64(1000)).Expect("OK")
 	cmd := New(conn)
 	var setResult string
 	errCmd := cmd.
-		Set(&setResult, key, value, &SetOption{PX: 1000}).
+		Set(&setResult, key, value, &SetOption{PX: uint64(1000)}).
 		Commit()
 
 	assert.Nil(t, errCmd)

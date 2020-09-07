@@ -22,22 +22,22 @@ func New(conn redis.Conn) *Commander {
 
 // SetOption define option args for redis Set command
 type SetOption struct {
-	EX      int  // EX seconds -- Set the specified expire time, in seconds.
-	PX      int  // PX milliseconds -- Set the specified expire time, in milliseconds.
-	NX      bool // NX -- Only set the key if it does not already exist.
-	XX      bool // XX -- Only set the key if it already exist.
-	KeepTTL bool // KeepTTL -- Retain the time to live associated with the key.
+	EX      uint64 // EX seconds -- Set the specified expire time, in seconds.
+	PX      uint64 // PX milliseconds -- Set the specified expire time, in milliseconds.
+	NX      bool   // NX -- Only set the key if it does not already exist.
+	XX      bool   // XX -- Only set the key if it already exist.
+	KeepTTL bool   // KeepTTL -- Retain the time to live associated with the key.
 }
 
 // XAddOption define option for redis stream XAdd command
 type XAddOption struct {
-	MaxLen      int
+	MaxLen      uint64
 	Approximate bool
 }
 
 // XReadOption define option for redis stream XRead command
 type XReadOption struct {
-	Count int
+	Count uint64
 	Block time.Duration
 }
 
@@ -48,16 +48,16 @@ type XGroupCreateOption struct {
 
 // XReadGroupOption define option for redis stream XReadGroup command
 type XReadGroupOption struct {
-	Count int
+	Count uint64
 	Block time.Duration
 	NoAck bool
 }
 
 // XClaimOption define option for redis stream XClaim command
 type XClaimOption struct {
-	Idle       time.Duration
-	Time       time.Time
-	RetryCount int
+	Idle       uint64
+	Time       uint64
+	RetryCount uint64
 	Force      bool
 	Justid     bool
 }
@@ -66,7 +66,7 @@ type XClaimOption struct {
 type XPendingOption struct {
 	StartID  string
 	EndID    string
-	Count    int
+	Count    uint64
 	Consumer string
 }
 
@@ -171,11 +171,11 @@ func (c *Commander) Set(result *string, key string, value interface{}, options *
 	command = command.Add(key)
 	command = command.Add(value)
 	if options != nil {
-		if options.EX > 0 {
+		if options.EX != 0 {
 			command = command.Add("EX")
 			command = command.Add(options.EX)
 		}
-		if options.PX > 0 {
+		if options.PX != 0 {
 			command = command.Add("PX")
 			command = command.Add(options.PX)
 		}
@@ -195,7 +195,7 @@ func (c *Commander) Set(result *string, key string, value interface{}, options *
 // XAdd appends the specified stream entry to the stream at the specified key.
 func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options *XAddOption) *Commander {
 	command := redis.Args{}.Add(streamName)
-	if options != nil && options.MaxLen > 0 {
+	if options != nil && options.MaxLen != 0 {
 		command = command.Add("MAXLEN")
 		if options.Approximate {
 			command = command.Add("~")
@@ -247,11 +247,11 @@ func (c *Commander) XGroupDelConsumer(result *int, streamName, groupName, consum
 func (c *Commander) XRead(result interface{}, streamList, idList []string, options *XReadOption) *Commander {
 	cmd := redis.Args{}
 	if options != nil {
-		if options.Count > 0 {
+		if options.Count != 0 {
 			cmd = cmd.Add("COUNT")
 			cmd = cmd.Add(options.Count)
 		}
-		if options.Block > 0 {
+		if options.Block != 0 {
 			cmd = cmd.Add("BLOCK")
 			cmd = cmd.Add(options.Block.Milliseconds())
 		}
@@ -277,11 +277,11 @@ func (c *Commander) XReadGroup(result interface{}, groupName, consumerName strin
 	cmd = cmd.Add(groupName)
 	cmd = cmd.Add(consumerName)
 	if options != nil {
-		if options.Count > 0 {
+		if options.Count != 0 {
 			cmd = cmd.Add("COUNT")
 			cmd = cmd.Add(options.Count)
 		}
-		if options.Block > 0 {
+		if options.Block != 0 {
 			cmd = cmd.Add("BLOCK")
 			cmd = cmd.Add(options.Block.Milliseconds())
 		}
@@ -358,11 +358,11 @@ func (c *Commander) XClaim(result interface{}, streamName, groupName, consumerNa
 	if options != nil {
 		if options.Idle != 0 {
 			cmd = cmd.Add("IDLE")
-			cmd = cmd.Add(options.Idle.Milliseconds())
+			cmd = cmd.Add(options.Idle)
 		}
-		if options.Time.Unix() > 0 {
+		if options.Time != 0 {
 			cmd = cmd.Add("TIME")
-			cmd = cmd.Add(options.Time.Unix())
+			cmd = cmd.Add(options.Time)
 		}
 		if options.RetryCount != 0 {
 			cmd = cmd.Add("RETRYCOUNT")
