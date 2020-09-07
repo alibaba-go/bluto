@@ -11,7 +11,7 @@ var ex uint64 = 1
 var nx bool = true
 
 // Example shows more complicated and dynamic use of options
-// forexmaple ex and nx variables are determiend in run-time
+// for example ex and nx variables are determined in run-time
 func ExampleCommander_Set_optionSlice() {
 	bluto, _ := bluto.New(bluto.Config{
 		Address:               "localhost:6379",
