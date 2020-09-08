@@ -1378,6 +1378,27 @@ var _ = Describe("Commander", func() {
 			Expect(setResult2).To(Equal("OK"))
 			Expect(existsResult).To(Equal(2))
 		})
+
+		It("should return the real results of a not-existing-key EXISTS", func() {
+			key := "SomeKey"
+			value := faker.Word()
+			conn := getConn()
+			var setResult string
+			var existsResult int
+			errSend := conn.Send("SET", key, value)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult)
+			conn = getConn()
+			commander := New(conn)
+			errCmd := commander.Exists(&existsResult, "NotExistingKey").Commit()
+
+			Expect(errSend).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(errCmd).To(BeNil())
+			Expect(setResult).To(Equal("OK"))
+			Expect(existsResult).To(Equal(0))
+		})
 	})
 
 	Describe("Integration test command and commit", func() {
