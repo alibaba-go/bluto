@@ -1,3 +1,8 @@
+[![Go](https://github.com/alibaba-go/bluto/workflows/Go/badge.svg)](https://github.com/alibaba-go/bluto/actions)
+[![Release (latest by date)](https://img.shields.io/github/v/tag/alibaba-go/bluto.svg)](https://github.com/alibaba-go/bluto/releases?style=flat-square)
+[![GoDoc](https://pkg.go.dev/badge/github.com/alibaba-go/bluto?status.svg)](https://pkg.go.dev/github.com/alibaba-go/bluto?tab=doc)
+[![Go Report Card](https://goreportcard.com/badge/github.com/alibaba-go/bluto)](https://goreportcard.com/report/github.com/alibaba-go/bluto)
+
 # Bluto
 Bluto is a golang implementation of redis client based on [Redigo](https://github.com/gomodule/redigo).The client manages a connection pool 
 for each node, uses goroutine to execute as concurrently as possible, which leads 
