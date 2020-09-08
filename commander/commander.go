@@ -365,3 +365,12 @@ func (c *Commander) XClaim(result interface{}, streamName, groupName, consumerNa
 		cmd...,
 	)
 }
+
+// Exists if key exists
+func (c *Commander) Exists(result *int, keys ...string) *Commander {
+	iKeys := make([]interface{}, len(keys))
+	for i := range keys {
+		iKeys[i] = keys[i]
+	}
+	return c.Command(result, "EXISTS", iKeys...)
+}
