@@ -55,11 +55,11 @@ func TestExpire(t *testing.T) {
 	conn := redigomock.NewConn()
 	conn.Command("EXPIRE", key, 1).Expect(int64(1))
 	cmd := New(conn)
-	var expireResult int
+	var expireResult bool
 	errCmd := cmd.Expire(&expireResult, key, 1).Commit()
 
 	assert.Nil(t, errCmd)
-	assert.Equal(t, expireResult, 1)
+	assert.Equal(t, expireResult, true)
 }
 
 func TestDel(t *testing.T) {

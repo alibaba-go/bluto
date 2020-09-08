@@ -114,7 +114,7 @@ func (c *Commander) Get(result interface{}, key string) *Commander {
 }
 
 // Expire set a timeout on key. After the timeout has expired, the key will automatically be deleted.
-func (c *Commander) Expire(result *int, key string, seconds int) *Commander {
+func (c *Commander) Expire(result *bool, key string, seconds int) *Commander {
 	return c.Command(result, "EXPIRE", key, seconds)
 }
 
