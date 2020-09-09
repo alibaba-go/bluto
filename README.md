@@ -22,7 +22,7 @@ with an options:
 ```go
 import ""
 
-bluto, err := Bluto.New(
+bluto, err := bluto.New(
     &bluto.config{
     Address:              "localhost:6379",
     Password              "password"
@@ -35,18 +35,18 @@ bluto, err := Bluto.New(
 Bluto gives you a commander by calling Borrow() which is interface to run redis commands exp.(GET, SELECT , ...) over a pool of redis connection which simplify all the managments of pool. 
 
 
-**RESTRICTION**: Please be sure the first argument in commander's args is result and all commands should ends with Commit().
+**RESTRICTION**: Please be sure the first argument in commander's args is result and all commands should ends with Commit().The optional arguments are passed as variadic args.
 
 See full redis commands: 
 
 ```go
-bluto.Borrow().Set(&setResult, "key", "value", SetOption{KEEPTTL: true}).Commit()
+bluto.Borrow().Set(&setResult, "key", "value", SetOptionKEEPTTL{}).Commit()
 bluto.Borrow().Get(&getResult, "key").Commit()
 bluto.Borrow().Incr(&incrResult, "key").Commit()
 ```
 You can also chain redis commands like this:
 ```go
-bluto.Borrow().Select(&selectResult, 2).Set(&setResult, "key", "value",SetOption{KEEPTTL: true}).Incr(&incrResult, "key").Commit()
+bluto.Borrow().Select(&selectResult, 2).Set(&setResult, "key", "value",SetOptionKEEPTTL{}).Incr(&incrResult, "key").Commit()
 bluto.Borrow().Select(&selectResult, 2).Get(&getResult, "key").Decr(&decrResult, "key").Del(&delResult, "key").Commit()
 ```
 Also, you can use Values and Scan to convert replies to multiple values with different types.
