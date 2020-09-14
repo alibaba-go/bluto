@@ -51,6 +51,13 @@ bluto.Borrow().Select(&selectResult, 2).Get(&getResult, "key").Decr(&decrResult,
 ```
 Also, you can use Values and Scan to convert replies to multiple values with different types.
 
+### Command's Options
+You can pass options as variadic args as last arguments.
+The Options for each command is interface which is satisfied by defined option structs.
+You can pass multipe options like this:
+```go
+bluto.Borrow().Set(&setResult, "key", "value", SetOptionEX{EX:1}, SetOptionNX{}, SetOptionKEEPTTL{}).Commit()
+```
 ## Contact
 Bug reports and feature requests are welcome.
 If you have any question, please email us at rd@alibaba.ir.
