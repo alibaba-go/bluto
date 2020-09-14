@@ -1,8 +1,6 @@
 package commander
 
 import (
-	"time"
-
 	"github.com/gomodule/redigo/redis"
 )
 
@@ -20,54 +18,230 @@ func New(conn redis.Conn) *Commander {
 	}
 }
 
-// SetOption define option args for redis Set command
-type SetOption struct {
-	EX      int  // EX seconds -- Set the specified expire time, in seconds.
-	PX      int  // PX milliseconds -- Set the specified expire time, in milliseconds.
-	NX      bool // NX -- Only set the key if it does not already exist.
-	XX      bool // XX -- Only set the key if it already exist.
-	KeepTTL bool // KeepTTL -- Retain the time to live associated with the key.
+// SetOption define option interface for redis Set command.
+type setOption interface {
+	setOption() []interface{}
 }
 
-// XAddOption define option for redis stream XAdd command
-type XAddOption struct {
-	MaxLen      int
+// SetOptionEX (EX seconds) Set the specified expire time, in seconds.
+type SetOptionEX struct {
+	EX uint64
+}
+
+// setOption statisfies setOption interface.
+func (so SetOptionEX) setOption() []interface{} {
+	return []interface{}{"EX", so.EX}
+}
+
+// SetOptionPX (PX milliseconds) Set the specified expire time, in milliseconds.
+type SetOptionPX struct {
+	PX uint64
+}
+
+// setOption statisfies setOption interface.
+func (so SetOptionPX) setOption() []interface{} {
+	return []interface{}{"PX", so.PX}
+}
+
+// SetOptionNX Only set the key if it does not already exist.
+type SetOptionNX struct {
+}
+
+// setOption statisfies setOption interface.
+func (so SetOptionNX) setOption() []interface{} {
+	return []interface{}{"NX"}
+}
+
+// SetOptionXX Only set the key if it already exist.
+type SetOptionXX struct {
+}
+
+// setOption statisfies setOption interface.
+func (so SetOptionXX) setOption() []interface{} {
+	return []interface{}{"XX"}
+}
+
+// SetOptionKeepTTL (Redis>=6.0) Retain the time to live associated with the key.
+type SetOptionKeepTTL struct {
+}
+
+// setOption statisfies setOption interface.
+func (so SetOptionKeepTTL) setOption() []interface{} {
+	return []interface{}{"KEEPTTL"}
+}
+
+// xaddOption define option interface for redis XADD command.
+type xaddOption interface {
+	xaddOption() []interface{}
+}
+
+// XAddOptionMaxLen limit the size of the stream to a maximum number of elements.
+type XAddOptionMaxLen struct {
+	MaxLen      uint64
 	Approximate bool
 }
 
-// XReadOption define option for redis stream XRead command
-type XReadOption struct {
-	Count int
-	Block time.Duration
+// xaddOption statisfies xaddOption interface.
+func (xo XAddOptionMaxLen) xaddOption() []interface{} {
+	option := []interface{}{"MAXLEN"}
+	if xo.Approximate {
+		option = append(option, "~")
+	}
+	option = append(option, xo.MaxLen)
+	return option
 }
 
-//XGroupCreateOption define option for redis stream XGroup Create command
-type XGroupCreateOption struct {
-	MKStream bool
+// xreadOption define option interface for redis XREAD command.
+type xreadOption interface {
+	xreadOption() []interface{}
 }
 
-// XReadGroupOption define option for redis stream XReadGroup command
-type XReadGroupOption struct {
-	Count int
-	Block time.Duration
-	NoAck bool
+// XReadOptionCount set maximum return count elements per stream.
+type XReadOptionCount struct {
+	Count uint64
 }
 
-// XClaimOption define option for redis stream XClaim command
-type XClaimOption struct {
-	Idle       time.Duration
-	Time       time.Time
-	RetryCount int
-	Force      bool
-	Justid     bool
+// xreadOption statisfies xreadOption interface.
+func (xo XReadOptionCount) xreadOption() []interface{} {
+	return []interface{}{"COUNT", xo.Count}
 }
 
-// XPendingOption define option for redis stream XPending command
-type XPendingOption struct {
-	StartID  string
-	EndID    string
-	Count    int
+// XReadOptionBlock (Block milliseconds) set block duartion if items are not available.
+type XReadOptionBlock struct {
+	Block uint64
+}
+
+// xreadOption statisfies xreadOption interface
+func (xo XReadOptionBlock) xreadOption() []interface{} {
+	return []interface{}{"BLOCK", xo.Block}
+}
+
+// xgroupCreateOption define option interface for redis XGROUP CREATE command.
+type xgroupCreateOption interface {
+	xgroupCreateOption() []interface{}
+}
+
+// XGroupCreateOptionMKStream creates stream if does not exists.
+type XGroupCreateOptionMKStream struct {
+}
+
+// xgroupCreateOption statisfies xgroupCreateOption interface.
+func (xo XGroupCreateOptionMKStream) xgroupCreateOption() []interface{} {
+	return []interface{}{"MKSTREAM"}
+}
+
+// xreadGroupOption define option interface for redis XREADGROUP command.
+type xreadGroupOption interface {
+	xreadGroupOption() []interface{}
+}
+
+// XReadGroupOptionCount set maximum return count elements per stream.
+type XReadGroupOptionCount struct {
+	Count uint64
+}
+
+// xreadGroupOption statisfies xreadGroupOption interface.
+func (xo XReadGroupOptionCount) xreadGroupOption() []interface{} {
+	return []interface{}{"COUNT", xo.Count}
+}
+
+// XReadGroupOptionBlock (Block milliseconds) set block duartion if items are not available.
+type XReadGroupOptionBlock struct {
+	Block uint64
+}
+
+// xreadGroupOption statisfies xreadGroupOption interface.
+func (xo XReadGroupOptionBlock) xreadGroupOption() []interface{} {
+	return []interface{}{"BLOCK", xo.Block}
+}
+
+// XReadGroupOptionNoAck avoid adding the message to the PEL.
+type XReadGroupOptionNoAck struct {
+}
+
+// xreadGroupOption statisfies xreadGroupOption interface.
+func (xo XReadGroupOptionNoAck) xreadGroupOption() []interface{} {
+	return []interface{}{"NOACK"}
+}
+
+// xreadGroupOption define option interface for redis XCLAIM command.
+type xclaimOption interface {
+	xclaimOption() []interface{}
+}
+
+// XClaimOptionIdle (Idle milliseconds) set the idle time (last time it was delivered) of the message.
+type XClaimOptionIdle struct {
+	Idle uint64
+}
+
+// xclaimOption statisfies xclaimOption interface.
+func (xo XClaimOptionIdle) xclaimOption() []interface{} {
+	return []interface{}{"IDLE", xo.Idle}
+}
+
+// XClaimOptionTime (Time milliseconds) is the same as IDLE but instead of a relative amount of milliseconds, it sets the idle time to a specific Unix time
+type XClaimOptionTime struct {
+	Time uint64
+}
+
+// xclaimOption statisfies xclaimOption interface.
+func (xo XClaimOptionTime) xclaimOption() []interface{} {
+	return []interface{}{"Time", xo.Time}
+}
+
+// XClaimOptionRetryCount set the retry counter to the specified value.
+type XClaimOptionRetryCount struct {
+	RetryCount uint64
+}
+
+// xclaimOption statisfies xclaimOption interface.
+func (xo XClaimOptionRetryCount) xclaimOption() []interface{} {
+	return []interface{}{"RETRYCOUNT", xo.RetryCount}
+}
+
+// XClaimOptionForce creates the pending message entry in the PEL even if certain specified IDs are not already in the PEL assigned to a different client.
+type XClaimOptionForce struct {
+}
+
+// xclaimOption statisfies xclaimOption interface.
+func (xo XClaimOptionForce) xclaimOption() []interface{} {
+	return []interface{}{"FORCE"}
+}
+
+// XClaimOptionJustID return just an array of IDs of messages successfully claimed, without returning the actual message.
+type XClaimOptionJustID struct {
+}
+
+// xclaimOption statisfies xclaimOption interface.
+func (xo XClaimOptionJustID) xclaimOption() []interface{} {
+	return []interface{}{"JUSTID"}
+}
+
+// xpendingOption define option interface for redis XPENDING command.
+type xpendingOption interface {
+	xpendingOption() []interface{}
+}
+
+// XPendingOptionStartEndCount define pass a range of IDs, and a non optional count argument.
+type XPendingOptionStartEndCount struct {
+	StartID string
+	EndID   string
+	Count   uint64
+}
+
+// xpendingOption statisfies xpendingOption interface.
+func (xo XPendingOptionStartEndCount) xpendingOption() []interface{} {
+	return []interface{}{xo.StartID, xo.EndID, xo.Count}
+}
+
+// XPendingOptionConsumer summary about the pending messages in a given consumer group
+type XPendingOptionConsumer struct {
 	Consumer string
+}
+
+// xpendingOption statisfies xpendingOption interface.
+func (xo XPendingOptionConsumer) xpendingOption() []interface{} {
+	return []interface{}{xo.Consumer}
 }
 
 // Command commands the redis connection
@@ -161,53 +335,34 @@ func (c *Commander) Ping(result *string, message string) *Commander {
 }
 
 // Set key to hold the string value. If key already holds a value, it is overwritten.
-func (c *Commander) Set(result *string, key string, value interface{}, options SetOption) *Commander {
-	command := redis.Args{}
-	command = command.Add(key)
-	command = command.Add(value)
-	if options.EX > 0 {
-		command = command.Add("EX")
-		command = command.Add(options.EX)
+func (c *Commander) Set(result *string, key string, value interface{}, options ...setOption) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add(key).Add(value)
+	for _, option := range options {
+		cmd = cmd.Add(option.setOption()...)
 	}
-	if options.PX > 0 {
-		command = command.Add("PX")
-		command = command.Add(options.PX)
-	}
-	if options.NX {
-		command = command.Add("NX")
-	}
-	if options.XX {
-		command = command.Add("XX")
-	}
-	if options.KeepTTL {
-		command = command.Add("KEEPTTL")
-	}
-	return c.Command(result, "SET", command...)
+	return c.Command(result, "SET", cmd...)
 }
 
 // XAdd appends the specified stream entry to the stream at the specified key.
-func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options XAddOption) *Commander {
-	command := redis.Args{}.Add(streamName)
-	if options.MaxLen > 0 {
-		command = command.Add("MAXLEN")
-		if options.Approximate {
-			command = command.Add("~")
-		}
-		command = command.Add(options.MaxLen)
+func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options ...xaddOption) *Commander {
+	cmd := redis.Args{}.Add(streamName)
+	for _, option := range options {
+		cmd = cmd.Add(option.xaddOption()...)
 	}
-	command = command.Add(streamID).AddFlat(fields)
+	cmd = cmd.Add(streamID).AddFlat(fields)
 	return c.Command(
 		result,
 		"XADD",
-		command...,
+		cmd...,
 	)
 }
 
 // XGroupCreate is used in order to manage the consumer groups associated with a stream data structure.
-func (c *Commander) XGroupCreate(result *string, streamName, groupName, streamID string, options XGroupCreateOption) *Commander {
+func (c *Commander) XGroupCreate(result *string, streamName, groupName, streamID string, options ...xgroupCreateOption) *Commander {
 	cmd := redis.Args{}.Add("CREATE").Add(streamName).Add(groupName).Add(streamID)
-	if options.MKStream {
-		cmd = cmd.Add("MKSTREAM")
+	for _, option := range options {
+		cmd = cmd.Add(option.xgroupCreateOption()...)
 	}
 	return c.Command(
 		result,
@@ -237,15 +392,10 @@ func (c *Commander) XGroupDelConsumer(result *int, streamName, groupName, consum
 }
 
 // XRead read data from one or multiple streams, only returning entries with an ID greater than the last received ID reported by the caller.
-func (c *Commander) XRead(result interface{}, streamList, idList []string, options XReadOption) *Commander {
+func (c *Commander) XRead(result interface{}, streamList, idList []string, options ...xreadOption) *Commander {
 	cmd := redis.Args{}
-	if options.Count > 0 {
-		cmd = cmd.Add("COUNT")
-		cmd = cmd.Add(options.Count)
-	}
-	if options.Block > 0 {
-		cmd = cmd.Add("BLOCK")
-		cmd = cmd.Add(options.Block.Milliseconds())
+	for _, option := range options {
+		cmd = cmd.Add(option.xreadOption()...)
 	}
 	cmd = cmd.Add("STREAMS")
 	for _, stream := range streamList {
@@ -262,21 +412,11 @@ func (c *Commander) XRead(result interface{}, streamList, idList []string, optio
 }
 
 // XReadGroup s a special version of the XREAD command with support for consumer groups.
-func (c *Commander) XReadGroup(result interface{}, groupName, consumerName string, streamList, idList []string, options XReadGroupOption) *Commander {
+func (c *Commander) XReadGroup(result interface{}, groupName, consumerName string, streamList, idList []string, options ...xreadGroupOption) *Commander {
 	cmd := redis.Args{}
-	cmd = cmd.Add("GROUP")
-	cmd = cmd.Add(groupName)
-	cmd = cmd.Add(consumerName)
-	if options.Count > 0 {
-		cmd = cmd.Add("COUNT")
-		cmd = cmd.Add(options.Count)
-	}
-	if options.Block > 0 {
-		cmd = cmd.Add("BLOCK")
-		cmd = cmd.Add(options.Block.Milliseconds())
-	}
-	if options.NoAck {
-		cmd = cmd.Add("NOACK")
+	cmd = cmd.Add("GROUP").Add(groupName).Add(consumerName)
+	for _, option := range options {
+		cmd = cmd.Add(option.xreadGroupOption()...)
 	}
 	cmd = cmd.Add("STREAMS")
 	for _, stream := range streamList {
@@ -308,21 +448,12 @@ func (c *Commander) XAck(result interface{}, streamName, groupName string, idLis
 }
 
 // XPending fetching data from a stream via a consumer group, and not acknowledging such data, has the effect of creating pending entries.
-func (c *Commander) XPending(result interface{}, streamName, groupName string, options XPendingOption) *Commander {
+func (c *Commander) XPending(result interface{}, streamName, groupName string, options ...xpendingOption) *Commander {
 	cmd := redis.Args{}
 	cmd = cmd.Add(streamName)
 	cmd = cmd.Add(groupName)
-	if options.StartID != "" {
-		cmd = cmd.Add(options.StartID)
-	}
-	if options.EndID != "" {
-		cmd = cmd.Add(options.EndID)
-	}
-	if options.Count != 0 {
-		cmd = cmd.Add(options.Count)
-	}
-	if options.Consumer != "" {
-		cmd = cmd.Add(options.Consumer)
+	for _, option := range options {
+		cmd = cmd.Add(option.xpendingOption()...)
 	}
 	return c.Command(
 		result,
@@ -332,32 +463,17 @@ func (c *Commander) XPending(result interface{}, streamName, groupName string, o
 }
 
 // XClaim this command changes the ownership of a pending message, so that the new owner is the consumer specified as the command argument.
-func (c *Commander) XClaim(result interface{}, streamName, groupName, consumerName string, minIdleTime time.Duration, idList []string, options XClaimOption) *Commander {
+func (c *Commander) XClaim(result interface{}, streamName, groupName, consumerName string, minIdleTime uint64, idList []string, options ...xclaimOption) *Commander {
 	cmd := redis.Args{}
 	cmd = cmd.Add(streamName)
 	cmd = cmd.Add(groupName)
 	cmd = cmd.Add(consumerName)
-	cmd = cmd.Add(minIdleTime.Milliseconds())
+	cmd = cmd.Add(minIdleTime)
 	for _, id := range idList {
 		cmd = cmd.Add(id)
 	}
-	if options.Idle != 0 {
-		cmd = cmd.Add("IDLE")
-		cmd = cmd.Add(options.Idle.Milliseconds())
-	}
-	if options.Time.Unix() > 0 {
-		cmd = cmd.Add("TIME")
-		cmd = cmd.Add(options.Time.Unix())
-	}
-	if options.RetryCount != 0 {
-		cmd = cmd.Add("RETRYCOUNT")
-		cmd = cmd.Add(options.RetryCount)
-	}
-	if options.Force {
-		cmd = cmd.Add("force")
-	}
-	if options.Justid {
-		cmd = cmd.Add("justid")
+	for _, option := range options {
+		cmd = cmd.Add(option.xclaimOption()...)
 	}
 	return c.Command(
 		result,
