@@ -41,4 +41,22 @@ jobs:
       run: |
         go get github.com/onsi/ginkgo/ginkgo
         go get github.com/onsi/gomega/...
-        ginkgo ./...
+        ginkgo ./... 
+
+    - name: Coverage
+      env:
+        REDIS_ADDRESS: "127.0.0.1:6379"
+      run: |
+        set -e
+        echo "" > coverage.txt
+        
+        for d in $(go list ./... | grep -v vendor); do
+            go test -race -coverprofile=profile.out -covermode=atomic $d
+            if [ -f profile.out ]; then
+                cat profile.out >> coverage.txt
+                rm profile.out
+            fi
+        done
+
+        bash <(curl -s https://codecov.io/bash)
+        
