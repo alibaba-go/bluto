@@ -1,5 +1,5 @@
-/*Package bluto is connection pool wraper which can borrow redis connection from pool and return them when finished.
-Pooler manage and reuse existing conection and provide advanced config options for handling timeouts.  
+/*Package bluto is a Redis connection pool which can lend Redis connections. The connection and the pool wrap and enhance their Redigo counterparts.
+bluto manages and reuse existing connections and provides advanced config options e.g. for handling timeouts.
 It also Support more advanced feature like TestOnBorrow which is health-check for connections.
 
 */
