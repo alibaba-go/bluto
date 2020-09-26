@@ -19,7 +19,7 @@ func New(conn redis.Conn) *Commander {
 }
 
 // SetOption define option interface for redis Set command.
-type setOption interface {
+type SetOption interface {
 	setOption() []interface{}
 }
 
@@ -70,8 +70,8 @@ func (so SetOptionKeepTTL) setOption() []interface{} {
 	return []interface{}{"KEEPTTL"}
 }
 
-// xaddOption define option interface for redis XADD command.
-type xaddOption interface {
+// XAddOption define option interface for redis XADD command.
+type XAddOption interface {
 	xaddOption() []interface{}
 }
 
@@ -91,8 +91,8 @@ func (xo XAddOptionMaxLen) xaddOption() []interface{} {
 	return option
 }
 
-// xreadOption define option interface for redis XREAD command.
-type xreadOption interface {
+// XReadOption define option interface for redis XREAD command.
+type XReadOption interface {
 	xreadOption() []interface{}
 }
 
@@ -116,8 +116,8 @@ func (xo XReadOptionBlock) xreadOption() []interface{} {
 	return []interface{}{"BLOCK", xo.Block}
 }
 
-// xgroupCreateOption define option interface for redis XGROUP CREATE command.
-type xgroupCreateOption interface {
+// XGroupCreateOption define option interface for redis XGROUP CREATE command.
+type XGroupCreateOption interface {
 	xgroupCreateOption() []interface{}
 }
 
@@ -130,8 +130,8 @@ func (xo XGroupCreateOptionMKStream) xgroupCreateOption() []interface{} {
 	return []interface{}{"MKSTREAM"}
 }
 
-// xreadGroupOption define option interface for redis XREADGROUP command.
-type xreadGroupOption interface {
+// XReadGroupOption define option interface for redis XREADGROUP command.
+type XReadGroupOption interface {
 	xreadGroupOption() []interface{}
 }
 
@@ -164,8 +164,8 @@ func (xo XReadGroupOptionNoAck) xreadGroupOption() []interface{} {
 	return []interface{}{"NOACK"}
 }
 
-// xreadGroupOption define option interface for redis XCLAIM command.
-type xclaimOption interface {
+// XClaimOption define option interface for redis XCLAIM command.
+type XClaimOption interface {
 	xclaimOption() []interface{}
 }
 
@@ -217,8 +217,8 @@ func (xo XClaimOptionJustID) xclaimOption() []interface{} {
 	return []interface{}{"JUSTID"}
 }
 
-// xpendingOption define option interface for redis XPENDING command.
-type xpendingOption interface {
+// XPendingOption define option interface for redis XPENDING command.
+type XPendingOption interface {
 	xpendingOption() []interface{}
 }
 
@@ -335,7 +335,7 @@ func (c *Commander) Ping(result *string, message string) *Commander {
 }
 
 // Set key to hold the string value. If key already holds a value, it is overwritten.
-func (c *Commander) Set(result *string, key string, value interface{}, options ...setOption) *Commander {
+func (c *Commander) Set(result *string, key string, value interface{}, options ...SetOption) *Commander {
 	cmd := redis.Args{}
 	cmd = cmd.Add(key).Add(value)
 	for _, option := range options {
@@ -345,7 +345,7 @@ func (c *Commander) Set(result *string, key string, value interface{}, options .
 }
 
 // XAdd appends the specified stream entry to the stream at the specified key.
-func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options ...xaddOption) *Commander {
+func (c *Commander) XAdd(result *string, streamName, streamID string, fields interface{}, options ...XAddOption) *Commander {
 	cmd := redis.Args{}.Add(streamName)
 	for _, option := range options {
 		cmd = cmd.Add(option.xaddOption()...)
@@ -359,7 +359,7 @@ func (c *Commander) XAdd(result *string, streamName, streamID string, fields int
 }
 
 // XGroupCreate is used in order to manage the consumer groups associated with a stream data structure.
-func (c *Commander) XGroupCreate(result *string, streamName, groupName, streamID string, options ...xgroupCreateOption) *Commander {
+func (c *Commander) XGroupCreate(result *string, streamName, groupName, streamID string, options ...XGroupCreateOption) *Commander {
 	cmd := redis.Args{}.Add("CREATE").Add(streamName).Add(groupName).Add(streamID)
 	for _, option := range options {
 		cmd = cmd.Add(option.xgroupCreateOption()...)
@@ -392,7 +392,7 @@ func (c *Commander) XGroupDelConsumer(result *int, streamName, groupName, consum
 }
 
 // XRead read data from one or multiple streams, only returning entries with an ID greater than the last received ID reported by the caller.
-func (c *Commander) XRead(result interface{}, streamList, idList []string, options ...xreadOption) *Commander {
+func (c *Commander) XRead(result interface{}, streamList, idList []string, options ...XReadOption) *Commander {
 	cmd := redis.Args{}
 	for _, option := range options {
 		cmd = cmd.Add(option.xreadOption()...)
@@ -412,7 +412,7 @@ func (c *Commander) XRead(result interface{}, streamList, idList []string, optio
 }
 
 // XReadGroup s a special version of the XREAD command with support for consumer groups.
-func (c *Commander) XReadGroup(result interface{}, groupName, consumerName string, streamList, idList []string, options ...xreadGroupOption) *Commander {
+func (c *Commander) XReadGroup(result interface{}, groupName, consumerName string, streamList, idList []string, options ...XReadGroupOption) *Commander {
 	cmd := redis.Args{}
 	cmd = cmd.Add("GROUP").Add(groupName).Add(consumerName)
 	for _, option := range options {
@@ -448,7 +448,7 @@ func (c *Commander) XAck(result interface{}, streamName, groupName string, idLis
 }
 
 // XPending fetching data from a stream via a consumer group, and not acknowledging such data, has the effect of creating pending entries.
-func (c *Commander) XPending(result interface{}, streamName, groupName string, options ...xpendingOption) *Commander {
+func (c *Commander) XPending(result interface{}, streamName, groupName string, options ...XPendingOption) *Commander {
 	cmd := redis.Args{}
 	cmd = cmd.Add(streamName)
 	cmd = cmd.Add(groupName)
@@ -463,7 +463,7 @@ func (c *Commander) XPending(result interface{}, streamName, groupName string, o
 }
 
 // XClaim this command changes the ownership of a pending message, so that the new owner is the consumer specified as the command argument.
-func (c *Commander) XClaim(result interface{}, streamName, groupName, consumerName string, minIdleTime uint64, idList []string, options ...xclaimOption) *Commander {
+func (c *Commander) XClaim(result interface{}, streamName, groupName, consumerName string, minIdleTime uint64, idList []string, options ...XClaimOption) *Commander {
 	cmd := redis.Args{}
 	cmd = cmd.Add(streamName)
 	cmd = cmd.Add(groupName)
