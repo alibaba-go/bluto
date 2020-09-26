@@ -261,7 +261,7 @@ var _ = Describe("Commander", func() {
 		var selectReslt string
 		err := commander.
 			Select(&selectReslt, 0).
-			FlushAll(&flushResult, false).
+			FlushAll(&flushResult).
 			Commit()
 		if err != nil {
 			panic(err)
@@ -624,9 +624,9 @@ var _ = Describe("Commander", func() {
 			_, errScan := redis.Scan(results, &setResult)
 			conn.Close()
 			conn = getConn()
-			commander := New(conn)
+			cmd := New(conn)
 			var flushResult string
-			errCmd := commander.FlushAll(&flushResult, true).Commit()
+			errCmd := cmd.FlushAll(&flushResult, FlushAllOptionAsync{}).Commit()
 			conn = getConn()
 			var getResult string
 			errSendGet := conn.Send("GET", key)
@@ -1471,7 +1471,7 @@ var _ = Describe("Commander", func() {
 
 		It("should return the results of a valid chain of del and flush commands", func() {
 			conn := getConn()
-			commander := New(conn)
+			cmd := New(conn)
 			key1 := "SomeKey1"
 			key2 := "SomeKey2"
 			var selectResult string
@@ -1483,14 +1483,14 @@ var _ = Describe("Commander", func() {
 			var getResult2 int
 			var flushResult string
 
-			errCmd := commander.
+			errCmd := cmd.
 				Select(&selectResult, 0).
 				Set(&setResult1, key1, 9).
 				Set(&setResult2, key2, 9).
 				Keys(&keysResult, "*Key*").
 				Del(&delResult, key1, "NotExistKey").
 				Get(&getResult1, key1).
-				FlushAll(&flushResult, true).
+				FlushAll(&flushResult, FlushAllOptionAsync{}).
 				Get(&getResult2, key2).
 				Commit()
 

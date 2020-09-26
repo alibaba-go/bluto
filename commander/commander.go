@@ -18,6 +18,20 @@ func New(conn redis.Conn) *Commander {
 	}
 }
 
+// FlushAllOption define option interface for redis FlushAll command.
+type FlushAllOption interface {
+	flushAllOption() []interface{}
+}
+
+// FlushAllOptionAsync let the entire dataset or a single database to be freed asynchronously.
+type FlushAllOptionAsync struct {
+}
+
+// flushAllOption satisfies FlushAllOption interface.
+func (fo FlushAllOptionAsync) flushAllOption() []interface{} {
+	return []interface{}{"ASYNC"}
+}
+
 // SetOption define option interface for redis Set command.
 type SetOption interface {
 	setOption() []interface{}
@@ -312,12 +326,12 @@ func (c *Commander) Incr(result *int64, key string) *Commander {
 }
 
 // FlushAll delete all the keys of all the existing databases, not just the currently selected one.
-func (c *Commander) FlushAll(result *string, async bool) *Commander {
-	var optionCmd []interface{}
-	if async {
-		optionCmd = append(optionCmd, "ASYNC")
+func (c *Commander) FlushAll(result *string, options ...FlushAllOption) *Commander {
+	cmd := redis.Args{}
+	for _, option := range options {
+		cmd = cmd.Add(option.flushAllOption()...)
 	}
-	return c.Command(result, "FLUSHALL", optionCmd...)
+	return c.Command(result, "FLUSHALL", cmd...)
 }
 
 // Keys returns all keys matching pattern.

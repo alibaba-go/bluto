@@ -130,7 +130,7 @@ func TestFlushAll(t *testing.T) {
 	conn.Command("FLUSHALL", "ASYNC").Expect("OK")
 	cmd := New(conn)
 	var flushResult string
-	errCmd := cmd.FlushAll(&flushResult, true).Commit()
+	errCmd := cmd.FlushAll(&flushResult, FlushAllOptionAsync{}).Commit()
 
 	assert.Nil(t, errCmd)
 	assert.Equal(t, flushResult, "OK")
