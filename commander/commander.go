@@ -28,7 +28,7 @@ type SetOptionEX struct {
 	EX uint64
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionEX) setOption() []interface{} {
 	return []interface{}{"EX", so.EX}
 }
@@ -38,7 +38,7 @@ type SetOptionPX struct {
 	PX uint64
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionPX) setOption() []interface{} {
 	return []interface{}{"PX", so.PX}
 }
@@ -47,7 +47,7 @@ func (so SetOptionPX) setOption() []interface{} {
 type SetOptionNX struct {
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionNX) setOption() []interface{} {
 	return []interface{}{"NX"}
 }
@@ -56,7 +56,7 @@ func (so SetOptionNX) setOption() []interface{} {
 type SetOptionXX struct {
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionXX) setOption() []interface{} {
 	return []interface{}{"XX"}
 }
@@ -65,7 +65,7 @@ func (so SetOptionXX) setOption() []interface{} {
 type SetOptionKeepTTL struct {
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionKeepTTL) setOption() []interface{} {
 	return []interface{}{"KEEPTTL"}
 }
@@ -81,7 +81,7 @@ type XAddOptionMaxLen struct {
 	Approximate bool
 }
 
-// xaddOption statisfies xaddOption interface.
+// xaddOption satisfies xaddOption interface.
 func (xo XAddOptionMaxLen) xaddOption() []interface{} {
 	option := []interface{}{"MAXLEN"}
 	if xo.Approximate {
@@ -101,7 +101,7 @@ type XReadOptionCount struct {
 	Count uint64
 }
 
-// xreadOption statisfies xreadOption interface.
+// xreadOption satisfies xreadOption interface.
 func (xo XReadOptionCount) xreadOption() []interface{} {
 	return []interface{}{"COUNT", xo.Count}
 }
@@ -111,7 +111,7 @@ type XReadOptionBlock struct {
 	Block uint64
 }
 
-// xreadOption statisfies xreadOption interface
+// xreadOption satisfies xreadOption interface
 func (xo XReadOptionBlock) xreadOption() []interface{} {
 	return []interface{}{"BLOCK", xo.Block}
 }
@@ -125,7 +125,7 @@ type XGroupCreateOption interface {
 type XGroupCreateOptionMKStream struct {
 }
 
-// xgroupCreateOption statisfies xgroupCreateOption interface.
+// xgroupCreateOption satisfies xgroupCreateOption interface.
 func (xo XGroupCreateOptionMKStream) xgroupCreateOption() []interface{} {
 	return []interface{}{"MKSTREAM"}
 }
@@ -140,7 +140,7 @@ type XReadGroupOptionCount struct {
 	Count uint64
 }
 
-// xreadGroupOption statisfies xreadGroupOption interface.
+// xreadGroupOption satisfies xreadGroupOption interface.
 func (xo XReadGroupOptionCount) xreadGroupOption() []interface{} {
 	return []interface{}{"COUNT", xo.Count}
 }
@@ -150,7 +150,7 @@ type XReadGroupOptionBlock struct {
 	Block uint64
 }
 
-// xreadGroupOption statisfies xreadGroupOption interface.
+// xreadGroupOption satisfies xreadGroupOption interface.
 func (xo XReadGroupOptionBlock) xreadGroupOption() []interface{} {
 	return []interface{}{"BLOCK", xo.Block}
 }
@@ -159,7 +159,7 @@ func (xo XReadGroupOptionBlock) xreadGroupOption() []interface{} {
 type XReadGroupOptionNoAck struct {
 }
 
-// xreadGroupOption statisfies xreadGroupOption interface.
+// xreadGroupOption satisfies xreadGroupOption interface.
 func (xo XReadGroupOptionNoAck) xreadGroupOption() []interface{} {
 	return []interface{}{"NOACK"}
 }
@@ -174,7 +174,7 @@ type XClaimOptionIdle struct {
 	Idle uint64
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionIdle) xclaimOption() []interface{} {
 	return []interface{}{"IDLE", xo.Idle}
 }
@@ -184,7 +184,7 @@ type XClaimOptionTime struct {
 	Time uint64
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionTime) xclaimOption() []interface{} {
 	return []interface{}{"Time", xo.Time}
 }
@@ -194,7 +194,7 @@ type XClaimOptionRetryCount struct {
 	RetryCount uint64
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionRetryCount) xclaimOption() []interface{} {
 	return []interface{}{"RETRYCOUNT", xo.RetryCount}
 }
@@ -203,7 +203,7 @@ func (xo XClaimOptionRetryCount) xclaimOption() []interface{} {
 type XClaimOptionForce struct {
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionForce) xclaimOption() []interface{} {
 	return []interface{}{"FORCE"}
 }
@@ -212,7 +212,7 @@ func (xo XClaimOptionForce) xclaimOption() []interface{} {
 type XClaimOptionJustID struct {
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionJustID) xclaimOption() []interface{} {
 	return []interface{}{"JUSTID"}
 }
@@ -229,7 +229,7 @@ type XPendingOptionStartEndCount struct {
 	Count   uint64
 }
 
-// xpendingOption statisfies xpendingOption interface.
+// xpendingOption satisfies xpendingOption interface.
 func (xo XPendingOptionStartEndCount) xpendingOption() []interface{} {
 	return []interface{}{xo.StartID, xo.EndID, xo.Count}
 }
@@ -239,7 +239,7 @@ type XPendingOptionConsumer struct {
 	Consumer string
 }
 
-// xpendingOption statisfies xpendingOption interface.
+// xpendingOption satisfies xpendingOption interface.
 func (xo XPendingOptionConsumer) xpendingOption() []interface{} {
 	return []interface{}{xo.Consumer}
 }
