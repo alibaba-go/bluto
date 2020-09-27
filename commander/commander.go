@@ -18,6 +18,21 @@ func New(conn redis.Conn) *Commander {
 	}
 }
 
+// PingOption define option interface for redis Ping command.
+type PingOption interface {
+	pingOption() []interface{}
+}
+
+// PingOptionMessage returns a copy of the message.
+type PingOptionMessage struct {
+	Message string
+}
+
+// pingOption satisfies pingOption interface.
+func (po PingOptionMessage) pingOption() []interface{} {
+	return []interface{}{po.Message}
+}
+
 // FlushAllOption define option interface for redis FlushAll command.
 type FlushAllOption interface {
 	flushAllOption() []interface{}
@@ -340,12 +355,12 @@ func (c *Commander) Keys(result *[]string, pattern string) *Commander {
 }
 
 // Ping returns PONG if no argument is provided, otherwise return a copy of the argument as a bulk.
-func (c *Commander) Ping(result *string, message string) *Commander {
-	var optionCmd []interface{}
-	if message != "" {
-		optionCmd = append(optionCmd, message)
+func (c *Commander) Ping(result *string, options ...PingOption) *Commander {
+	cmd := redis.Args{}
+	for _, option := range options {
+		cmd = cmd.Add(option.pingOption()...)
 	}
-	return c.Command(result, "PING", optionCmd...)
+	return c.Command(result, "PING", cmd...)
 }
 
 // Set key to hold the string value. If key already holds a value, it is overwritten.

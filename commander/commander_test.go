@@ -107,7 +107,7 @@ func TestPing(t *testing.T) {
 	conn.Command("PING", "PingMsg").Expect("PingMsg")
 	cmd := New(conn)
 	var pingResult string
-	errCmd := cmd.Ping(&pingResult, "PingMsg").Commit()
+	errCmd := cmd.Ping(&pingResult, PingOptionMessage{Message: "PingMsg"}).Commit()
 	assert.Nil(t, errCmd)
 	assert.Equal(t, pingResult, "PingMsg")
 }

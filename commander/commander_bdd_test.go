@@ -680,7 +680,7 @@ var _ = Describe("Commander", func() {
 			conn := getConn()
 			commander := New(conn)
 			var pingResult string
-			errCmd := commander.Ping(&pingResult, "PingMsg").Commit()
+			errCmd := commander.Ping(&pingResult, PingOptionMessage{"PingMsg"}).Commit()
 			Expect(errCmd).To(BeNil())
 			Expect(pingResult).To(Equal("PingMsg"))
 		})
@@ -1408,9 +1408,9 @@ var _ = Describe("Commander", func() {
 			var pingResult2 string
 			conn := pool.Get()
 			commander := New(conn)
-			errCmd1 := commander.Ping(&pingResult1, "").Commit()
+			errCmd1 := commander.Ping(&pingResult1).Commit()
 			commander = New(conn)
-			errCmd2 := commander.Ping(&pingResult2, "").Commit()
+			errCmd2 := commander.Ping(&pingResult2).Commit()
 
 			Expect(errpool).To(BeNil())
 			Expect(pingResult1).To(Equal("PONG"))
@@ -1425,7 +1425,7 @@ var _ = Describe("Commander", func() {
 			var pingResult string
 			conn := pool.Get()
 			commander := New(conn)
-			errCmd := commander.Command(&commandResult, "NotExistCommand").Ping(&pingResult, "").Commit()
+			errCmd := commander.Command(&commandResult, "NotExistCommand").Ping(&pingResult).Commit()
 
 			Expect(errpool).To(BeNil())
 			Expect(commandResult).To(BeNil())
@@ -1522,7 +1522,7 @@ var _ = Describe("Commander", func() {
 				Incr(&incrResult, key).
 				Get(&getResult, key).
 				Decr(&decrResult, key).
-				Ping(&pingResult, pingMsg).
+				Ping(&pingResult, PingOptionMessage{pingMsg}).
 				Commit()
 
 			Expect(errCmd).To(BeNil())
