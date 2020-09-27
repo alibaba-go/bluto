@@ -18,7 +18,7 @@ func ExampleCommander_Set_optionSlice() {
 		ConnectTimeoutSeconds: 10,
 		ReadTimeoutSeconds:    10,
 	})
-	defer bluto.Close()
+	defer bluto.ClosePool()
 
 	options := []commander.SetOption{}
 	if nx != false {
