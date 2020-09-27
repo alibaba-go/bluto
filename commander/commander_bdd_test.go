@@ -261,7 +261,7 @@ var _ = Describe("Commander", func() {
 		var selectReslt string
 		err := commander.
 			Select(&selectReslt, 0).
-			FlushAll(&flushResult, false).
+			FlushAll(&flushResult).
 			Commit()
 		if err != nil {
 			panic(err)
@@ -624,9 +624,9 @@ var _ = Describe("Commander", func() {
 			_, errScan := redis.Scan(results, &setResult)
 			conn.Close()
 			conn = getConn()
-			commander := New(conn)
+			cmd := New(conn)
 			var flushResult string
-			errCmd := commander.FlushAll(&flushResult, true).Commit()
+			errCmd := cmd.FlushAll(&flushResult, FlushAllOptionAsync{}).Commit()
 			conn = getConn()
 			var getResult string
 			errSendGet := conn.Send("GET", key)
@@ -680,7 +680,7 @@ var _ = Describe("Commander", func() {
 			conn := getConn()
 			commander := New(conn)
 			var pingResult string
-			errCmd := commander.Ping(&pingResult, "PingMsg").Commit()
+			errCmd := commander.Ping(&pingResult, PingOptionMessage{"PingMsg"}).Commit()
 			Expect(errCmd).To(BeNil())
 			Expect(pingResult).To(Equal("PingMsg"))
 		})
@@ -1408,9 +1408,9 @@ var _ = Describe("Commander", func() {
 			var pingResult2 string
 			conn := pool.Get()
 			commander := New(conn)
-			errCmd1 := commander.Ping(&pingResult1, "").Commit()
+			errCmd1 := commander.Ping(&pingResult1).Commit()
 			commander = New(conn)
-			errCmd2 := commander.Ping(&pingResult2, "").Commit()
+			errCmd2 := commander.Ping(&pingResult2).Commit()
 
 			Expect(errpool).To(BeNil())
 			Expect(pingResult1).To(Equal("PONG"))
@@ -1425,7 +1425,7 @@ var _ = Describe("Commander", func() {
 			var pingResult string
 			conn := pool.Get()
 			commander := New(conn)
-			errCmd := commander.Command(&commandResult, "NotExistCommand").Ping(&pingResult, "").Commit()
+			errCmd := commander.Command(&commandResult, "NotExistCommand").Ping(&pingResult).Commit()
 
 			Expect(errpool).To(BeNil())
 			Expect(commandResult).To(BeNil())
@@ -1471,7 +1471,7 @@ var _ = Describe("Commander", func() {
 
 		It("should return the results of a valid chain of del and flush commands", func() {
 			conn := getConn()
-			commander := New(conn)
+			cmd := New(conn)
 			key1 := "SomeKey1"
 			key2 := "SomeKey2"
 			var selectResult string
@@ -1483,14 +1483,14 @@ var _ = Describe("Commander", func() {
 			var getResult2 int
 			var flushResult string
 
-			errCmd := commander.
+			errCmd := cmd.
 				Select(&selectResult, 0).
 				Set(&setResult1, key1, 9).
 				Set(&setResult2, key2, 9).
 				Keys(&keysResult, "*Key*").
 				Del(&delResult, key1, "NotExistKey").
 				Get(&getResult1, key1).
-				FlushAll(&flushResult, true).
+				FlushAll(&flushResult, FlushAllOptionAsync{}).
 				Get(&getResult2, key2).
 				Commit()
 
@@ -1522,7 +1522,7 @@ var _ = Describe("Commander", func() {
 				Incr(&incrResult, key).
 				Get(&getResult, key).
 				Decr(&decrResult, key).
-				Ping(&pingResult, pingMsg).
+				Ping(&pingResult, PingOptionMessage{pingMsg}).
 				Commit()
 
 			Expect(errCmd).To(BeNil())

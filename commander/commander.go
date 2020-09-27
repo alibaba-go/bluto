@@ -18,6 +18,35 @@ func New(conn redis.Conn) *Commander {
 	}
 }
 
+// PingOption define option interface for redis Ping command.
+type PingOption interface {
+	pingOption() []interface{}
+}
+
+// PingOptionMessage returns a copy of the message.
+type PingOptionMessage struct {
+	Message string
+}
+
+// pingOption satisfies pingOption interface.
+func (po PingOptionMessage) pingOption() []interface{} {
+	return []interface{}{po.Message}
+}
+
+// FlushAllOption define option interface for redis FlushAll command.
+type FlushAllOption interface {
+	flushAllOption() []interface{}
+}
+
+// FlushAllOptionAsync let the entire dataset or a single database to be freed asynchronously.
+type FlushAllOptionAsync struct {
+}
+
+// flushAllOption satisfies FlushAllOption interface.
+func (fo FlushAllOptionAsync) flushAllOption() []interface{} {
+	return []interface{}{"ASYNC"}
+}
+
 // SetOption define option interface for redis Set command.
 type SetOption interface {
 	setOption() []interface{}
@@ -28,7 +57,7 @@ type SetOptionEX struct {
 	EX uint64
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionEX) setOption() []interface{} {
 	return []interface{}{"EX", so.EX}
 }
@@ -38,7 +67,7 @@ type SetOptionPX struct {
 	PX uint64
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionPX) setOption() []interface{} {
 	return []interface{}{"PX", so.PX}
 }
@@ -47,7 +76,7 @@ func (so SetOptionPX) setOption() []interface{} {
 type SetOptionNX struct {
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionNX) setOption() []interface{} {
 	return []interface{}{"NX"}
 }
@@ -56,7 +85,7 @@ func (so SetOptionNX) setOption() []interface{} {
 type SetOptionXX struct {
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionXX) setOption() []interface{} {
 	return []interface{}{"XX"}
 }
@@ -65,7 +94,7 @@ func (so SetOptionXX) setOption() []interface{} {
 type SetOptionKeepTTL struct {
 }
 
-// setOption statisfies setOption interface.
+// setOption satisfies setOption interface.
 func (so SetOptionKeepTTL) setOption() []interface{} {
 	return []interface{}{"KEEPTTL"}
 }
@@ -81,7 +110,7 @@ type XAddOptionMaxLen struct {
 	Approximate bool
 }
 
-// xaddOption statisfies xaddOption interface.
+// xaddOption satisfies xaddOption interface.
 func (xo XAddOptionMaxLen) xaddOption() []interface{} {
 	option := []interface{}{"MAXLEN"}
 	if xo.Approximate {
@@ -101,7 +130,7 @@ type XReadOptionCount struct {
 	Count uint64
 }
 
-// xreadOption statisfies xreadOption interface.
+// xreadOption satisfies xreadOption interface.
 func (xo XReadOptionCount) xreadOption() []interface{} {
 	return []interface{}{"COUNT", xo.Count}
 }
@@ -111,7 +140,7 @@ type XReadOptionBlock struct {
 	Block uint64
 }
 
-// xreadOption statisfies xreadOption interface
+// xreadOption satisfies xreadOption interface
 func (xo XReadOptionBlock) xreadOption() []interface{} {
 	return []interface{}{"BLOCK", xo.Block}
 }
@@ -125,7 +154,7 @@ type XGroupCreateOption interface {
 type XGroupCreateOptionMKStream struct {
 }
 
-// xgroupCreateOption statisfies xgroupCreateOption interface.
+// xgroupCreateOption satisfies xgroupCreateOption interface.
 func (xo XGroupCreateOptionMKStream) xgroupCreateOption() []interface{} {
 	return []interface{}{"MKSTREAM"}
 }
@@ -140,7 +169,7 @@ type XReadGroupOptionCount struct {
 	Count uint64
 }
 
-// xreadGroupOption statisfies xreadGroupOption interface.
+// xreadGroupOption satisfies xreadGroupOption interface.
 func (xo XReadGroupOptionCount) xreadGroupOption() []interface{} {
 	return []interface{}{"COUNT", xo.Count}
 }
@@ -150,7 +179,7 @@ type XReadGroupOptionBlock struct {
 	Block uint64
 }
 
-// xreadGroupOption statisfies xreadGroupOption interface.
+// xreadGroupOption satisfies xreadGroupOption interface.
 func (xo XReadGroupOptionBlock) xreadGroupOption() []interface{} {
 	return []interface{}{"BLOCK", xo.Block}
 }
@@ -159,7 +188,7 @@ func (xo XReadGroupOptionBlock) xreadGroupOption() []interface{} {
 type XReadGroupOptionNoAck struct {
 }
 
-// xreadGroupOption statisfies xreadGroupOption interface.
+// xreadGroupOption satisfies xreadGroupOption interface.
 func (xo XReadGroupOptionNoAck) xreadGroupOption() []interface{} {
 	return []interface{}{"NOACK"}
 }
@@ -174,7 +203,7 @@ type XClaimOptionIdle struct {
 	Idle uint64
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionIdle) xclaimOption() []interface{} {
 	return []interface{}{"IDLE", xo.Idle}
 }
@@ -184,7 +213,7 @@ type XClaimOptionTime struct {
 	Time uint64
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionTime) xclaimOption() []interface{} {
 	return []interface{}{"Time", xo.Time}
 }
@@ -194,7 +223,7 @@ type XClaimOptionRetryCount struct {
 	RetryCount uint64
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionRetryCount) xclaimOption() []interface{} {
 	return []interface{}{"RETRYCOUNT", xo.RetryCount}
 }
@@ -203,7 +232,7 @@ func (xo XClaimOptionRetryCount) xclaimOption() []interface{} {
 type XClaimOptionForce struct {
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionForce) xclaimOption() []interface{} {
 	return []interface{}{"FORCE"}
 }
@@ -212,7 +241,7 @@ func (xo XClaimOptionForce) xclaimOption() []interface{} {
 type XClaimOptionJustID struct {
 }
 
-// xclaimOption statisfies xclaimOption interface.
+// xclaimOption satisfies xclaimOption interface.
 func (xo XClaimOptionJustID) xclaimOption() []interface{} {
 	return []interface{}{"JUSTID"}
 }
@@ -229,7 +258,7 @@ type XPendingOptionStartEndCount struct {
 	Count   uint64
 }
 
-// xpendingOption statisfies xpendingOption interface.
+// xpendingOption satisfies xpendingOption interface.
 func (xo XPendingOptionStartEndCount) xpendingOption() []interface{} {
 	return []interface{}{xo.StartID, xo.EndID, xo.Count}
 }
@@ -239,7 +268,7 @@ type XPendingOptionConsumer struct {
 	Consumer string
 }
 
-// xpendingOption statisfies xpendingOption interface.
+// xpendingOption satisfies xpendingOption interface.
 func (xo XPendingOptionConsumer) xpendingOption() []interface{} {
 	return []interface{}{xo.Consumer}
 }
@@ -312,12 +341,12 @@ func (c *Commander) Incr(result *int64, key string) *Commander {
 }
 
 // FlushAll delete all the keys of all the existing databases, not just the currently selected one.
-func (c *Commander) FlushAll(result *string, async bool) *Commander {
-	var optionCmd []interface{}
-	if async {
-		optionCmd = append(optionCmd, "ASYNC")
+func (c *Commander) FlushAll(result *string, options ...FlushAllOption) *Commander {
+	cmd := redis.Args{}
+	for _, option := range options {
+		cmd = cmd.Add(option.flushAllOption()...)
 	}
-	return c.Command(result, "FLUSHALL", optionCmd...)
+	return c.Command(result, "FLUSHALL", cmd...)
 }
 
 // Keys returns all keys matching pattern.
@@ -326,12 +355,12 @@ func (c *Commander) Keys(result *[]string, pattern string) *Commander {
 }
 
 // Ping returns PONG if no argument is provided, otherwise return a copy of the argument as a bulk.
-func (c *Commander) Ping(result *string, message string) *Commander {
-	var optionCmd []interface{}
-	if message != "" {
-		optionCmd = append(optionCmd, message)
+func (c *Commander) Ping(result *string, options ...PingOption) *Commander {
+	cmd := redis.Args{}
+	for _, option := range options {
+		cmd = cmd.Add(option.pingOption()...)
 	}
-	return c.Command(result, "PING", optionCmd...)
+	return c.Command(result, "PING", cmd...)
 }
 
 // Set key to hold the string value. If key already holds a value, it is overwritten.

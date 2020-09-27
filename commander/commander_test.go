@@ -107,7 +107,7 @@ func TestPing(t *testing.T) {
 	conn.Command("PING", "PingMsg").Expect("PingMsg")
 	cmd := New(conn)
 	var pingResult string
-	errCmd := cmd.Ping(&pingResult, "PingMsg").Commit()
+	errCmd := cmd.Ping(&pingResult, PingOptionMessage{Message: "PingMsg"}).Commit()
 	assert.Nil(t, errCmd)
 	assert.Equal(t, pingResult, "PingMsg")
 }
@@ -130,7 +130,7 @@ func TestFlushAll(t *testing.T) {
 	conn.Command("FLUSHALL", "ASYNC").Expect("OK")
 	cmd := New(conn)
 	var flushResult string
-	errCmd := cmd.FlushAll(&flushResult, true).Commit()
+	errCmd := cmd.FlushAll(&flushResult, FlushAllOptionAsync{}).Commit()
 
 	assert.Nil(t, errCmd)
 	assert.Equal(t, flushResult, "OK")
