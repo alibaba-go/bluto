@@ -65,7 +65,7 @@ You can pass multiple options like this:
 ```go
 bluto.Borrow().Set(&setResult, "key", "value", SetOptionEX{EX:1}, SetOptionNX{}, SetOptionKEEPTTL{}).Commit()
 ```
-For more advanced example look at [example](https://pkg.go.dev/github.com/alibaba-go/bluto/commander#example-Commander.Set-optionSlice/)
+For more advanced example look at [example](https://pkg.go.dev/github.com/alibaba-go/bluto/commander#example-Commander.Set-OptionSlice)
 
 ## Contributing
 See [CONTRIBUTING.md](https://github.com/alibaba-go/bluto/blob/master/CONTRIBUTING.md).
