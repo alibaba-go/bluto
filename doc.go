@@ -1,4 +1,4 @@
-/*package bluto is redis library wrapper over redigo which adds type safety, chained commands and
+/*Package bluto is redis library wrapper over redigo which adds type safety, chained commands and
 managed connection pool which makes it easier for developers to use the library and reduce runtime bugs.
 
 bluto instance is completely thread-safe which means you can pass bluto objects
@@ -12,5 +12,4 @@ run all of them with commit. This chaining reduces the time when the connection 
 the pool connection reuse latency.
 
 */
-
 package bluto
