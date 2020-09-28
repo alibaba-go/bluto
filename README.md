@@ -2,6 +2,8 @@
 [![GoDoc](https://pkg.go.dev/badge/github.com/alibaba-go/bluto?status.svg)](https://pkg.go.dev/github.com/alibaba-go/bluto?tab=doc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/alibaba-go/bluto)](https://goreportcard.com/report/github.com/alibaba-go/bluto)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4289/badge)](https://bestpractices.coreinfrastructure.org/projects/4289)
+
+Coverage:
 [![Coverage](https://codecov.io/gh/alibaba-go/bluto/branch/master/graph/badge.svg)](https://codecov.io/gh/alibaba-go/bluto)
 
 
