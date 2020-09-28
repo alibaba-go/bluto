@@ -27,7 +27,7 @@ func (bl *Bluto) Borrow() *commander.Commander {
 	return commander
 }
 
-// Close closes redis pool
-func (bl *Bluto) Close() error {
+// ClosePool closes redis pool
+func (bl *Bluto) ClosePool() error {
 	return bl.pool.Close()
 }

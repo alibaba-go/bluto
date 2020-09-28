@@ -34,7 +34,7 @@ var _ = Describe("Bluto", func() {
 	Describe("New", func() {
 		It("should create new bluto instance with correct config", func() {
 			bluto, newErr := bluto.New(getCorrectConfig())
-			defer bluto.Close()
+			defer bluto.ClosePool()
 			var pingResult string
 			cmdErr := bluto.Borrow().Ping(&pingResult).Commit()
 			Expect(cmdErr).To(BeNil())
@@ -55,7 +55,7 @@ var _ = Describe("Bluto", func() {
 	Describe("Close", func() {
 		It("should close bluto instance", func() {
 			bluto, newErr := bluto.New(getCorrectConfig())
-			clsErr := bluto.Close()
+			clsErr := bluto.ClosePool()
 			var pingResult string
 			cmdErr := bluto.Borrow().Ping(&pingResult).Commit()
 			Expect(clsErr).To(BeNil())
@@ -68,7 +68,7 @@ var _ = Describe("Bluto", func() {
 	Describe("Borrow", func() {
 		It("should borrow a connection from the redis pool", func() {
 			bluto, newErr := bluto.New(getCorrectConfig())
-			defer bluto.Close()
+			defer bluto.ClosePool()
 			var pingResult string
 			cmdErr := bluto.Borrow().Ping(&pingResult).Commit()
 			Expect(cmdErr).To(BeNil())
