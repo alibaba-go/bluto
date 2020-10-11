@@ -1401,6 +1401,30 @@ var _ = Describe("Commander", func() {
 		})
 	})
 
+	Describe("HEXISTS", func() {
+		It("should return the real results of a valid HEXISTS", func() {
+			key1 := "SomeKey1"
+			value1 := faker.Word()
+			conn := getConn()
+			var setResult int
+			var existsResult bool
+			errSend := conn.Send("HSET", key1, "value1", value1)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &setResult)
+			conn = getConn()
+			commander := New(conn)
+			errCmd := commander.HExists(&existsResult, "SomeKey1", "value1").Commit()
+
+			Expect(errSend).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(errCmd).To(BeNil())
+			Expect(setResult).To(Equal(1))
+			Expect(existsResult).To(Equal(true))
+		})
+
+	})
+
 	Describe("Integration test command and commit", func() {
 		It("should return the error of resuing closed connection", func() {
 			pool, errpool := bluto.GetPool(getCorrectConfig())
