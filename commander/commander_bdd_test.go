@@ -1401,6 +1401,42 @@ var _ = Describe("Commander", func() {
 		})
 	})
 
+	Describe("HSET", func() {
+		It("should return the real results of a valid HSET", func() {
+			key := "SomeKey"
+			strValue := faker.Word()
+			intValue := faker.RandomUnixTime()
+			var values []interface{}
+			values = append(values, strValue)
+			values = append(values, intValue)
+			conn := getConn()
+			var hSetResult int
+			var hGetResultInt int64
+			var hGetResultStr string
+			cmd := New(conn)
+			errCmd := cmd.HSet(&hSetResult, key, []string{"strValue", "intValue"}, values).Commit()
+			conn = getConn()
+			errSend1 := conn.Send("HGET", key, "strValue")
+			results, errResult1 := redis.Values(conn.Do(""))
+			_, errScan1 := redis.Scan(results, &hGetResultStr)
+			conn = getConn()
+			errSend2 := conn.Send("HGET", key, "intValue")
+			results, errResult2 := redis.Values(conn.Do(""))
+			_, errScan2 := redis.Scan(results, &hGetResultInt)
+
+			Expect(errSend1).To(BeNil())
+			Expect(errScan1).To(BeNil())
+			Expect(errResult1).To(BeNil())
+			Expect(errSend2).To(BeNil())
+			Expect(errScan2).To(BeNil())
+			Expect(errResult2).To(BeNil())
+			Expect(errCmd).To(BeNil())
+			Expect(hSetResult).To(Equal(2))
+			Expect(hGetResultInt).To(Equal(intValue))
+			Expect(hGetResultStr).To(Equal(strValue))
+		})
+	})
+
 	Describe("Integration test command and commit", func() {
 		It("should return the error of resuing closed connection", func() {
 			pool, errpool := bluto.GetPool(getCorrectConfig())

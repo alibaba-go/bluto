@@ -521,7 +521,7 @@ func (c *Commander) Exists(result *int, keys ...string) *Commander {
 }
 
 // HSet sets field in the hash stored at key to value. If key does not exist, a new key holding a hash is created.
-func (c *Commander) HSet(result *string, key string, field []string, value []interface{}) *Commander {
+func (c *Commander) HSet(result *int, key string, field []string, value []interface{}) *Commander {
 	cmd := redis.Args{}
 	cmd = cmd.Add(key)
 	for index := range field {
