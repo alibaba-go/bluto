@@ -1437,6 +1437,30 @@ var _ = Describe("Commander", func() {
 		})
 	})
 
+	Describe("HGET", func() {
+		It("should return the real results of a valid HSET", func() {
+			key := "SomeKey"
+			value := faker.Word()
+			conn := getConn()
+			var hGetResult string
+			var hSetResult int
+			errSend := conn.Send("HSET", key, "field", value)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &hSetResult)
+			conn = getConn()
+			cmd := New(conn)
+			errCmd := cmd.HGet(&hGetResult, key,"field").Commit()
+
+			Expect(errSend).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(errCmd).To(BeNil())
+			Expect(hSetResult).To(Equal(1))
+			Expect(hGetResult).To(Equal(value))
+		})
+	})
+
+
 	Describe("Integration test command and commit", func() {
 		It("should return the error of resuing closed connection", func() {
 			pool, errpool := bluto.GetPool(getCorrectConfig())
