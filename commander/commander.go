@@ -530,3 +530,8 @@ func (c *Commander) HSet(result *string, key string, field []string, value []int
 	}
 	return c.Command(result, "HSET", cmd...)
 }
+
+// HGet Returns the value associated with field in the hash stored at key.
+func (c *Commander) HGet(result interface{}, key, field string) *Commander {
+	return c.Command(result, "HGET", key, field)
+}
