@@ -553,7 +553,10 @@ func (c *Commander) HGetAll(result *[]string, key string) *Commander {
 
 // HSetNX sets field in the hash stored at key to value, only if field does not yet exist.
 func (c *Commander) HSetNX(result *bool, key string, field string, value interface{}) *Commander {
-	cmd := redis.Args{}
-	cmd = cmd.Add(key)
 	return c.Command(result, "HSETNX", key, field, value)
+}
+
+// HIncrBy increments the number stored at field in the hash stored at key by increment.
+func (c *Commander) HIncrBy(result *int64, key string, field string, increment int64) *Commander {
+	return c.Command(result, "HINCRBY", key, field, increment)
 }
