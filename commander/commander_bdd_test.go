@@ -1567,6 +1567,31 @@ var _ = Describe("Commander", func() {
 		})
 	})
 
+	Describe("HINCRBY", func() {
+		It("should return the real results of a valid HINCRBY", func() {
+			key := "SomeKey"
+			value := faker.RandomUnixTime()
+			increment := int64(-4)
+			conn := getConn()
+			var hIncrResult int64
+			var hSetResult int
+			errSend := conn.Send("HSET", key, "field", value)
+			results, errResult := redis.Values(conn.Do(""))
+			_, errScan := redis.Scan(results, &hSetResult)
+			conn.Close()
+			conn = getConn()
+			cmd := New(conn)
+			errCmd := cmd.HIncrBy(&hIncrResult, key, "field", increment).Commit()
+
+			Expect(errSend).To(BeNil())
+			Expect(errScan).To(BeNil())
+			Expect(errResult).To(BeNil())
+			Expect(errCmd).To(BeNil())
+			Expect(hSetResult).To(Equal(1))
+			Expect(hIncrResult).To(Equal(value+increment))
+		})
+	})
+
 	Describe("Integration test command and commit", func() {
 		It("should return the error of resuing closed connection", func() {
 			pool, errpool := bluto.GetPool(getCorrectConfig())
