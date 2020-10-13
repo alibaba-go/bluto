@@ -521,17 +521,27 @@ func (c *Commander) Exists(result *int, keys ...string) *Commander {
 }
 
 // HSet sets field in the hash stored at key to value. If key does not exist, a new key holding a hash is created.
-func (c *Commander) HSet(result *int, key string, field []string, value []interface{}) *Commander {
+func (c *Commander) HSet(result *int, key string, fields []string, value []interface{}) *Commander {
 	cmd := redis.Args{}
 	cmd = cmd.Add(key)
-	for index := range field {
-		cmd = cmd.Add(field[index])
+	for index := range fields {
+		cmd = cmd.Add(fields[index])
 		cmd = cmd.Add(value[index])
 	}
 	return c.Command(result, "HSET", cmd...)
 }
 
-// HGet Returns the value associated with field in the hash stored at key.
+// HGet returns the value associated with field in the hash stored at key.
 func (c *Commander) HGet(result interface{}, key, field string) *Commander {
 	return c.Command(result, "HGET", key, field)
+}
+
+// HDel removes the specified fields from the hash stored at key.
+func (c *Commander) HDel(result *int, key string, fields []string) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add(key)
+	for _, field := range fields {
+		cmd = cmd.Add(field)
+	}
+	return c.Command(result, "HDEL", cmd...)
 }
