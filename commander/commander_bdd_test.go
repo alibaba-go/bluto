@@ -1508,6 +1508,54 @@ var _ = Describe("Commander", func() {
 		})
 	})
 
+	Describe("HSETNX", func() {
+		It("should return the real results of a valid HSETNX", func() {
+			key := "SomeKey"
+			value1 := faker.Word()
+			value2 := faker.Word()
+			conn := getConn()
+			var hSetResult int
+			var hSetNXResult1 bool
+			var hSetNXResult2 bool
+			var hGetResult1 string
+			var hGetResult2 string
+			var values []interface{}
+			values = append(values, value1)
+			errSend1 := conn.Send("HSET", key, "field1", value1)
+			results, errResult1 := redis.Values(conn.Do(""))
+			_, errScan1 := redis.Scan(results, &hSetResult)
+			conn = getConn()
+			cmd := New(conn)
+			errCmd1 := cmd.HSetNX(&hSetNXResult1, key, "field1", value2).Commit()
+			conn = getConn()
+			cmd = New(conn)
+			errCmd2 := cmd.HSetNX(&hSetNXResult2, key, "field2", value2).Commit()
+			conn = getConn()
+			errSend2 := conn.Send("HGET", key, "field1")
+			results, errResult2 := redis.Values(conn.Do(""))
+			_, errScan2 := redis.Scan(results, &hGetResult1)
+			conn = getConn()
+			errSend3 := conn.Send("HGET", key, "field2")
+			results, errResult3 := redis.Values(conn.Do(""))
+			_, errScan3 := redis.Scan(results, &hGetResult2)
+
+			Expect(errSend1).To(BeNil())
+			Expect(errScan1).To(BeNil())
+			Expect(errResult1).To(BeNil())
+			Expect(errSend2).To(BeNil())
+			Expect(errScan2).To(BeNil())
+			Expect(errResult2).To(BeNil())
+			Expect(errSend3).To(BeNil())
+			Expect(errScan3).To(BeNil())
+			Expect(errResult3).To(BeNil())
+			Expect(errCmd1).To(BeNil())
+			Expect(errCmd2).To(BeNil())
+			Expect(hSetResult).To(Equal(1))
+			Expect(hGetResult1).To(Equal(value1))
+			Expect(hGetResult2).To(Equal(value2))
+		})
+	})
+
 	Describe("Integration test command and commit", func() {
 		It("should return the error of resuing closed connection", func() {
 			pool, errpool := bluto.GetPool(getCorrectConfig())
