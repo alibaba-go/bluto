@@ -551,3 +551,9 @@ func (c *Commander) HGetAll(result *[]string, key string) *Commander {
 	return c.Command(result, "HGETALL", key)
 }
 
+// HSetNX sets field in the hash stored at key to value, only if field does not yet exist.
+func (c *Commander) HSetNX(result *bool, key string, field string, value interface{}) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add(key)
+	return c.Command(result, "HSETNX", key, field, value)
+}
