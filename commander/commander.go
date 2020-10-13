@@ -545,3 +545,9 @@ func (c *Commander) HDel(result *int, key string, fields []string) *Commander {
 	}
 	return c.Command(result, "HDEL", cmd...)
 }
+
+// HGetAll returns all fields and values of the hash stored at key.
+func (c *Commander) HGetAll(result *[]string, key string) *Commander {
+	return c.Command(result, "HGETALL", key)
+}
+
