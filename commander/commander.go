@@ -323,6 +323,9 @@ func (c *Commander) Expire(result *bool, key string, seconds int) *Commander {
 
 // Del removes the specified keys. A key is ignored if it does not exist.
 func (c *Commander) Del(result *int, keys ...string) *Commander {
+	if len(keys) == 0 {
+		return c
+	}
 	iKeys := make([]interface{}, len(keys))
 	for i := range keys {
 		iKeys[i] = keys[i]
@@ -422,6 +425,9 @@ func (c *Commander) XGroupDelConsumer(result *int, streamName, groupName, consum
 
 // XRead read data from one or multiple streams, only returning entries with an ID greater than the last received ID reported by the caller.
 func (c *Commander) XRead(result interface{}, streamList, idList []string, options ...XReadOption) *Commander {
+	if len(streamList) == 0 && len(idList) == 0 {
+		return c
+	}
 	cmd := redis.Args{}
 	for _, option := range options {
 		cmd = cmd.Add(option.xreadOption()...)
@@ -442,6 +448,9 @@ func (c *Commander) XRead(result interface{}, streamList, idList []string, optio
 
 // XReadGroup s a special version of the XREAD command with support for consumer groups.
 func (c *Commander) XReadGroup(result interface{}, groupName, consumerName string, streamList, idList []string, options ...XReadGroupOption) *Commander {
+	if len(streamList) == 0 && len(idList) == 0 {
+		return c
+	}
 	cmd := redis.Args{}
 	cmd = cmd.Add("GROUP").Add(groupName).Add(consumerName)
 	for _, option := range options {
@@ -463,6 +472,9 @@ func (c *Commander) XReadGroup(result interface{}, groupName, consumerName strin
 
 // XAck  removes one or multiple messages from the pending entries list (PEL) of a stream consumer group.
 func (c *Commander) XAck(result interface{}, streamName, groupName string, idList []string) *Commander {
+	if len(idList) == 0{
+		return c
+	}
 	cmd := redis.Args{}
 	cmd = cmd.Add(streamName)
 	cmd = cmd.Add(groupName)
