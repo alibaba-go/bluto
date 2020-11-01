@@ -289,6 +289,10 @@ func (c *Commander) Command(result interface{}, name string, args ...interface{}
 // Commit returns the results of all the commands
 func (c *Commander) Commit() error {
 	defer c.conn.Close()
+	// ignore commands when there is no pendingResults
+	if len(c.pendingResults) == 0 {
+		return nil
+	}
 	// if there has been an error don't do anything
 	if c.err != nil {
 		return c.err
@@ -472,7 +476,7 @@ func (c *Commander) XReadGroup(result interface{}, groupName, consumerName strin
 
 // XAck  removes one or multiple messages from the pending entries list (PEL) of a stream consumer group.
 func (c *Commander) XAck(result interface{}, streamName, groupName string, idList []string) *Commander {
-	if len(idList) == 0{
+	if len(idList) == 0 {
 		return c
 	}
 	cmd := redis.Args{}

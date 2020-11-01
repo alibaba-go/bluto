@@ -543,6 +543,16 @@ var _ = Describe("Commander", func() {
 			Expect(getResult).To(Equal(""))
 			Expect(delResult).To(Equal(1))
 		})
+
+		It("should ignore commnad when keys are empty", func() {
+			conn := getConn()
+			commander := New(conn)
+			var delResult int
+			errCmd := commander.Del(&delResult, []string{}...).Commit()
+
+			Expect(errCmd).To(BeNil())
+			Expect(delResult).To(Equal(0))
+		})
 	})
 
 	Describe("Incr", func() {
@@ -803,6 +813,16 @@ var _ = Describe("Commander", func() {
 			Expect(len(xreadResult[0].Messages)).To(Equal(1))
 			Expect(xreadResult[0].Messages[0].Fields.Key).To(Equal(key))
 		})
+
+		It("should ignore commnad when streams and keys are empty", func() {
+			var xreadResult []Stream
+			conn := getConn()
+			commander := New(conn)
+			errCmd := commander.XRead(&xreadResult, []string{}, []string{}).Commit()
+
+			Expect(errCmd).To(BeNil())
+			Expect(xreadResult).To(BeNil())
+		})
 	})
 
 	Describe("XReadGroup", func() {
@@ -929,6 +949,17 @@ var _ = Describe("Commander", func() {
 			Expect(len(xreadGroupResult[0].Messages)).To(Equal(1))
 			Expect(xreadGroupResult[0].Messages[0].Fields.Key).To(Equal(key))
 		})
+
+		It("should ignore commnad when streams and keys are empty", func() {
+			var xreadGroupResult []Stream
+			conn := getConn()
+			commander := New(conn)
+			errCmd := commander.XReadGroup(&xreadGroupResult, "", "", []string{}, []string{}).Commit()
+
+			Expect(errCmd).To(BeNil())
+			Expect(xreadGroupResult).To(BeNil())
+		})
+
 	})
 
 	Describe("XGROUP", func() {
@@ -1059,6 +1090,17 @@ var _ = Describe("Commander", func() {
 			Expect(xreadgroupResult2[0].Messages).To(BeNil())
 			Expect(xackResult).To(Equal(1))
 		})
+
+		It("should ignore commnad when keys are empty", func() {
+			var xackResult int
+			conn := getConn()
+			commander := New(conn)
+			errCmd := commander.XAck(&xackResult, "", "", []string{}).Commit()
+
+			Expect(errCmd).To(BeNil())
+			Expect(xackResult).To(Equal(0))
+		})
+
 	})
 
 	Describe("XPENDING", func() {
