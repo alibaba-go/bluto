@@ -520,6 +520,47 @@ func (c *Commander) Exists(result *int, keys ...string) *Commander {
 	return c.Command(result, "EXISTS", iKeys...)
 }
 
+// HSet sets field in the hash stored at key to value. If key does not exist, a new key holding a hash is created.
+func (c *Commander) HSet(result *int, key string, fields []string, value []interface{}) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add(key)
+	for index := range fields {
+		cmd = cmd.Add(fields[index])
+		cmd = cmd.Add(value[index])
+	}
+	return c.Command(result, "HSET", cmd...)
+}
+
+// HGet returns the value associated with field in the hash stored at key.
+func (c *Commander) HGet(result interface{}, key, field string) *Commander {
+	return c.Command(result, "HGET", key, field)
+}
+
+// HDel removes the specified fields from the hash stored at key.
+func (c *Commander) HDel(result *int, key string, fields []string) *Commander {
+	cmd := redis.Args{}
+	cmd = cmd.Add(key)
+	for _, field := range fields {
+		cmd = cmd.Add(field)
+	}
+	return c.Command(result, "HDEL", cmd...)
+}
+
+// HGetAll returns all fields and values of the hash stored at key.
+func (c *Commander) HGetAll(result *[]string, key string) *Commander {
+	return c.Command(result, "HGETALL", key)
+}
+
+// HSetNX sets field in the hash stored at key to value, only if field does not yet exist.
+func (c *Commander) HSetNX(result *bool, key string, field string, value interface{}) *Commander {
+	return c.Command(result, "HSETNX", key, field, value)
+}
+
+// HIncrBy increments the number stored at field in the hash stored at key by increment.
+func (c *Commander) HIncrBy(result *int64, key string, field string, increment int64) *Commander {
+	return c.Command(result, "HINCRBY", key, field, increment)
+}
+
 // HExists returns if field is an existing field in the hash stored at key.
 func (c *Commander) HExists(result *bool, key, field string) *Commander {
 	return c.Command(result, "HEXISTS", key, field)
