@@ -519,3 +519,8 @@ func (c *Commander) Exists(result *int, keys ...string) *Commander {
 	}
 	return c.Command(result, "EXISTS", iKeys...)
 }
+
+// HExists returns if field is an existing field in the hash stored at key.
+func (c *Commander) HExists(result *bool, key, field string) *Commander {
+	return c.Command(result, "HEXISTS", key, field)
+}
