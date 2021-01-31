@@ -6,9 +6,7 @@
 
 
 # Bluto
-Bluto is a golang implementation of redis client based on [Redigo](https://github.com/gomodule/redigo).The client manages a connection pool 
-for each node, uses goroutine to execute as concurrently as possible, which leads 
-to its high efficiency and low latency.
+Bluto is a golang implementation of Redis client based on [Redigo](https://github.com/gomodule/redigo). The client manages a connection pool for each node and uses goroutine to execute as concurrently as possible, leading to its high efficiency and low latency.
 
 **Supported**:
 * Most commands of keys, strings, lists, sets, sorted sets, hashes.
@@ -24,10 +22,10 @@ Install Bluto with go tool:
 ```
     
 ## Usage
-To use redis cluster, you need import the package and create a new bluto client
-with an options:
+To use Redis cluster, you need to import the package and create a new Bluto client
+with a config:
 ```go
-import ""
+import "https://github.com/alibaba-go/bluto"
 
 bluto, err := bluto.New(
     &bluto.config{
@@ -39,8 +37,7 @@ bluto, err := bluto.New(
 ```
 
 ### Basic
-Bluto gives you a commander by calling Borrow() which is interface to run redis commands exp.(GET, SELECT , ...) over a pool of redis connection which simplify all the managements of pool. 
-
+Bluto gives you a commander by calling Borrow(), an interface to run Redis commands (GET, SELECT, etc.) over a Redis connection pool that simplifies all the pool's management.
 
 **RESTRICTION**: Please be sure the first argument in commander's args is result and all commands should ends with Commit().The optional arguments are passed as variadic args.
 
